@@ -28,27 +28,52 @@ class StudentProfileController extends Controller
     exit;
   }
 
-  private function handleFileUpload($file, $uploadDir)
+  private function handleFileUpload($file, $uploadSubDir)
   {
     if (!isset($file) || $file['error'] !== UPLOAD_ERR_OK) {
       return null;
     }
 
-    $uploadDir = ltrim(rtrim($uploadDir, '/'), '/') . '/';
+    // LISTAHAN NG POSSIBLE PATHS (I-adjust mo base sa folder names niyo)
+    // Subukan nating hanapin ang 'backend' folder
+    $possiblePaths = [
+      realpath(__DIR__ . '/../../../../backend/public/'), // Path A
+      realpath($_SERVER['DOCUMENT_ROOT'] . '/backend/public/'), // Path B
+      'C:/Users/adria/Desktop/backend/public/' // Path C (Hardcoded fallback para sa PC mo)
+    ];
 
-    $localSavePath = ROOT_PATH . '/public/' . $uploadDir;
-
-    if (!file_exists($localSavePath)) {
-      mkdir($localSavePath, 0777, true);
+    $laravelPublicPath = null;
+    foreach ($possiblePaths as $path) {
+      if ($path && file_exists($path)) {
+        $laravelPublicPath = $path;
+        break;
+      }
     }
 
+    if (!$laravelPublicPath) {
+      // Ito ang magsasabi sa atin kung bakit fail
+      error_log("Upload Error: All possible paths failed for " . __DIR__);
+      return null;
+    }
+
+    $uploadSubDir = trim($uploadSubDir, '/\\');
+    $fullTargetDir = $laravelPublicPath . DIRECTORY_SEPARATOR . $uploadSubDir;
+
+    if (!file_exists($fullTargetDir)) {
+      mkdir($fullTargetDir, 0777, true);
+    }
+
+    $prefix = (strpos($uploadSubDir, 'profile') !== false) ? 'profile_' : 'reg_';
     $extension = strtolower(pathinfo($file['name'], PATHINFO_EXTENSION));
-    $fileName = uniqid('file_', true) . '.' . $extension;
-    $targetLocalFile = $localSavePath . $fileName;
+    $fileName = $prefix . ($_SESSION['user_id'] ?? 'user') . '_' . time() . '.' . $extension;
 
-    if (move_uploaded_file($file['tmp_name'], $targetLocalFile)) {
-      return $uploadDir . $fileName;
+    $targetFile = $fullTargetDir . DIRECTORY_SEPARATOR . $fileName;
+
+    if (move_uploaded_file($file['tmp_name'], $targetFile)) {
+      // Mahalaga: Forward slash (/) ang i-save sa DB para sa URL compatibility
+      return 'uploads/' . basename($uploadSubDir) . '/' . $fileName;
     }
+
     return null;
   }
 
@@ -187,7 +212,16 @@ class StudentProfileController extends Controller
       if ($isNewProfilePicUploaded) {
         $validation = $this->validateImageUpload($_FILES['profile_image']);
         if ($validation !== true) return $this->json(['success' => false, 'message' => $validation], 400);
-        $imagePath = $this->handleFileUpload($_FILES['profile_image'], "uploads/profile_images"); // Fixed path
+
+        $imagePath = $this->handleFileUpload($_FILES['profile_image'], "uploads/profile_images");
+
+        if ($imagePath === null) {
+          return $this->json([
+            'success' => false,
+            'message' => 'Failed to move file. Check if the folder exists and is writable.'
+          ], 500);
+        }
+
         $userData['profile_picture'] = $imagePath;
       }
 

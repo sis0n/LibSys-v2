@@ -27,24 +27,49 @@ class StaffProfileController extends Controller
     exit;
   }
 
-  private function handleFileUpload($file)
+  private function handleFileUpload($file, $uploadSubDir)
   {
     if (!isset($file) || $file['error'] !== UPLOAD_ERR_OK) {
       return null;
     }
 
-    $uploadDir = __DIR__ . '/../../public/uploads/profile_images/';
+    // LISTAHAN NG POSSIBLE PATHS (I-adjust mo base sa folder names niyo)
+    // Subukan nating hanapin ang 'backend' folder
+    $possiblePaths = [
+      realpath(__DIR__ . '/../../../../backend/public/'), // Path A
+      realpath($_SERVER['DOCUMENT_ROOT'] . '/backend/public/'), // Path B
+      'C:/Users/adria/Desktop/backend/public/' // Path C (Hardcoded fallback para sa PC mo)
+    ];
 
-    if (!file_exists($uploadDir)) {
-      mkdir($uploadDir, 0777, true);
+    $laravelPublicPath = null;
+    foreach ($possiblePaths as $path) {
+      if ($path && file_exists($path)) {
+        $laravelPublicPath = $path;
+        break;
+      }
     }
 
+    if (!$laravelPublicPath) {
+      // Ito ang magsasabi sa atin kung bakit fail
+      error_log("Upload Error: All possible paths failed for " . __DIR__);
+      return null;
+    }
+
+    $uploadSubDir = trim($uploadSubDir, '/\\');
+    $fullTargetDir = $laravelPublicPath . DIRECTORY_SEPARATOR . $uploadSubDir;
+
+    if (!file_exists($fullTargetDir)) {
+      mkdir($fullTargetDir, 0777, true);
+    }
+
+    $prefix = (strpos($uploadSubDir, 'profile') !== false) ? 'profile_' : 'reg_';
     $extension = strtolower(pathinfo($file['name'], PATHINFO_EXTENSION));
-    $fileName = uniqid('file_', true) . '.' . $extension;
-    $targetFile = $uploadDir . $fileName;
+    $fileName = $prefix . ($_SESSION['user_id'] ?? 'user') . '_' . time() . '.' . $extension;
+
+    $targetFile = $fullTargetDir . DIRECTORY_SEPARATOR . $fileName;
 
     if (move_uploaded_file($file['tmp_name'], $targetFile)) {
-      return BASE_URL . '/uploads/profile_images/' . $fileName;
+      return 'uploads/' . basename($uploadSubDir) . '/' . $fileName;
     }
 
     return null;
@@ -130,7 +155,7 @@ class StaffProfileController extends Controller
       if ($validation !== true) {
         return $this->json(['success' => false, 'message' => $validation], 400);
       }
-      $imagePath = $this->handleFileUpload($_FILES['profile_image']);
+      $imagePath = $this->handleFileUpload($_FILES['profile_image'], "uploads/profile_images");
     }
 
     // --- Prepare user data for update ---
