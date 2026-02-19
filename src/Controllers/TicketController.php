@@ -380,7 +380,8 @@ class TicketController extends Controller
     // ❌ No Active Transaction
     echo json_encode([
       'success' => true,
-      'status' => 'expired'
+      'status' => 'none',
+      // 'message' => 'You have no active borrowing tickets.'
     ]);
   }
 }
