@@ -14,28 +14,28 @@ class CartRepository
     $this->db = Database::getInstance()->getConnection();
   }
 
-  public function addToCart(int $studentId, int $bookId): bool
+  public function addToCart(int $userId, int $bookId): bool
   {
-    $check = $this->db->prepare("SELECT 1 FROM carts WHERE student_id = ? AND book_id = ?");
-    $check->execute([$studentId, $bookId]);
+    $check = $this->db->prepare("SELECT 1 FROM carts WHERE user_id = ? AND book_id = ?");
+    $check->execute([$userId, $bookId]);
     if ($check->fetch()) {
       return false;
     }
 
-    $stmt = $this->db->prepare("INSERT INTO carts (student_id, book_id) VALUES (?, ?)");
-    return $stmt->execute([$studentId, $bookId]);
+    $stmt = $this->db->prepare("INSERT INTO carts (user_id, book_id) VALUES (?, ?)");
+    return $stmt->execute([$userId, $bookId]);
   }
 
-  public function getCartByStudent(int $studentId): array
+  public function getCartByUser(int $userId): array
   {
     $sql = "SELECT c.cart_id, b.book_id, b.title, b.author, b.accession_number, b.subject, b.call_number
                 FROM carts c
                 INNER JOIN books b ON c.book_id = b.book_id
-                WHERE c.student_id = :student_id
+                WHERE c.user_id = :user_id
                 ORDER BY c.cart_id DESC";
 
     $stmt = $this->db->prepare($sql);
-    $stmt->execute(['student_id' => $studentId]);
+    $stmt->execute(['user_id' => $userId]);
     $rows = $stmt->fetchAll(PDO::FETCH_ASSOC) ?: [];
 
     return array_map(fn($row) => [
@@ -51,31 +51,23 @@ class CartRepository
     ], $rows);
   }
 
-  public function removeFromCart(int $cartId, int $studentId): bool
+  public function removeFromCart(int $cartId, int $userId): bool
   {
-    $stmt = $this->db->prepare("DELETE FROM carts WHERE cart_id = ? AND student_id = ?");
-    return $stmt->execute([$cartId, $studentId]);
+    $stmt = $this->db->prepare("DELETE FROM carts WHERE cart_id = ? AND user_id = ?");
+    return $stmt->execute([$cartId, $userId]);
   }
 
-  public function countCartItems(int $studentId): int
+  public function countCartItems(int $userId): int
   {
-    $stmt = $this->db->prepare("SELECT COUNT(*) as total FROM carts WHERE student_id = ?");
-    $stmt->execute([$studentId]);
+    $stmt = $this->db->prepare("SELECT COUNT(*) as total FROM carts WHERE user_id = ?");
+    $stmt->execute([$userId]);
     $row = $stmt->fetch(PDO::FETCH_ASSOC);
     return isset($row['total']) ? (int)$row['total'] : 0;
   }
 
-  public function getStudentIdByUserId(int $userId): ?int
+  public function clearCart(int $userId): bool
   {
-    $stmt = $this->db->prepare("SELECT student_id FROM students WHERE user_id = ?");
-    $stmt->execute([$userId]);
-    $row = $stmt->fetch(PDO::FETCH_ASSOC);
-    return isset($row['student_id']) ? (int)$row['student_id'] : null;
-  }
-
-  public function clearCart(int $studentId): bool
-  {
-    $stmt = $this->db->prepare("DELETE FROM carts WHERE student_id = ?");
-    return $stmt->execute([$studentId]);
+    $stmt = $this->db->prepare("DELETE FROM carts WHERE user_id = ?");
+    return $stmt->execute([$userId]);
   }
 }

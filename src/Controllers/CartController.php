@@ -14,11 +14,6 @@ class CartController extends Controller
     $this->cartRepo = new CartRepository();
   }
 
-  private function getStudentId($userId)
-  {
-    return $this->cartRepo->getStudentIdByUserId($userId);
-  }
-
   private function showErrorPage(int $status, string $message = "")
   {
     http_response_code($status);
@@ -29,12 +24,9 @@ class CartController extends Controller
   public function index()
   {
     $userId = $this->ensureStudent();
-    if (!$userId) $this->showErrorPage(401, "Bawal ka dito boi");
+    if (!$userId) $this->showErrorPage(401, "Unauthorized");
 
-    $studentId = $this->getStudentId($userId);
-    if (!$studentId) $this->showErrorPage(400, "No student record found for this user.");
-
-    $cartItems = $this->cartRepo->getCartByStudent($studentId);
+    $cartItems = $this->cartRepo->getCartByUser($userId);
     $this->view("student/cart", [
       "cartItems" => $cartItems,
       "title" => "My Cart"
@@ -46,15 +38,12 @@ class CartController extends Controller
     $userId = $this->ensureStudent();
     if (!$userId) $this->showErrorPage(401, "Not logged in");
 
-    $studentId = $this->getStudentId($userId);
-    if (!$studentId) $this->showErrorPage(400, "User is not a student");
-
-    $success = $this->cartRepo->addToCart($studentId, $bookId);
+    $success = $this->cartRepo->addToCart($userId, $bookId);
 
     header('Content-Type: application/json');
     echo json_encode([
       "success" => $success,
-      "cart_count" => $this->cartRepo->countCartItems($studentId)
+      "cart_count" => $this->cartRepo->countCartItems($userId)
     ]);
   }
 
@@ -63,10 +52,7 @@ class CartController extends Controller
     $userId = $this->ensureStudent();
     if (!$userId) $this->showErrorPage(401, "Not logged in");
 
-    $studentId = $this->getStudentId($userId);
-    if (!$studentId) $this->showErrorPage(400, "No student record found for this user");
-
-    $this->cartRepo->removeFromCart($cartId, $studentId);
+    $this->cartRepo->removeFromCart((int)$cartId, $userId);
 
     header('Content-Type: application/json');
     echo json_encode(["success" => true]);
@@ -77,10 +63,7 @@ class CartController extends Controller
     $userId = $this->ensureStudent();
     if (!$userId) $this->showErrorPage(401, "Not logged in");
 
-    $studentId = $this->getStudentId($userId);
-    if (!$studentId) $this->showErrorPage(400, "No student record found for this user");
-
-    $this->cartRepo->clearCart($studentId);
+    $this->cartRepo->clearCart($userId);
 
     header('Content-Type: application/json');
     echo json_encode(["success" => true]);
@@ -91,10 +74,7 @@ class CartController extends Controller
     $userId = $this->ensureStudent();
     if (!$userId) $this->showErrorPage(401, "Not logged in");
 
-    $studentId = $this->getStudentId($userId);
-    if (!$studentId) $this->showErrorPage(400, "No student record found for this user");
-
-    $cartItems = $this->cartRepo->getCartByStudent($studentId);
+    $cartItems = $this->cartRepo->getCartByUser($userId);
 
     header('Content-Type: application/json');
     echo json_encode($cartItems);
@@ -104,9 +84,6 @@ class CartController extends Controller
   {
     $userId = $this->ensureStudent();
     if (!$userId) $this->showErrorPage(401, "Not logged in");
-
-    $studentId = $this->getStudentId($userId);
-    if (!$studentId) $this->showErrorPage(400, "No student record found for this user");
 
     $data = json_decode(file_get_contents("php://input"), true);
     $cartIds = $data['cart_ids'] ?? [];
@@ -120,7 +97,7 @@ class CartController extends Controller
     $ticketId = uniqid("TICKET-");
 
     foreach ($cartIds as $cid) {
-      $this->cartRepo->removeFromCart((int)$cid, $studentId);
+      $this->cartRepo->removeFromCart((int)$cid, $userId);
     }
 
     header('Content-Type: application/json');
