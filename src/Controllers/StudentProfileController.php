@@ -34,33 +34,37 @@ class StudentProfileController extends Controller
       return null;
     }
 
-    // LISTAHAN NG POSSIBLE PATHS (I-adjust mo base sa folder names niyo)
-    // Subukan nating hanapin ang 'backend' folder
     $possiblePaths = [
-      realpath(__DIR__ . '/../../../../backend/public/'), // Path A
-      realpath($_SERVER['DOCUMENT_ROOT'] . '/backend/public/'), // Path B
-      'C:/Users/adria/Desktop/backend/public/' // Path C (Hardcoded fallback para sa PC mo)
+      realpath(__DIR__ . '/../../../../backend/storage/app/public/'),
+      realpath($_SERVER['DOCUMENT_ROOT'] . '/backend/storage/app/public/'),
+      realpath($_SERVER['DOCUMENT_ROOT'] . '/../backend/storage/app/public/'),
+      'C:/xampp/htdocs/backend/storage/app/public/',
+      'C:/Users/adria/Desktop/backend/storage/app/public/'
     ];
 
-    $laravelPublicPath = null;
+    $laravelStoragePath = null;
     foreach ($possiblePaths as $path) {
       if ($path && file_exists($path)) {
-        $laravelPublicPath = $path;
+        $laravelStoragePath = $path;
         break;
       }
     }
 
-    if (!$laravelPublicPath) {
-      // Ito ang magsasabi sa atin kung bakit fail
-      error_log("Upload Error: All possible paths failed for " . __DIR__);
+    if (!$laravelStoragePath) {
+      error_log("Upload Error: Could not dynamically locate Laravel storage path.");
       return null;
     }
 
     $uploadSubDir = trim($uploadSubDir, '/\\');
-    $fullTargetDir = $laravelPublicPath . DIRECTORY_SEPARATOR . $uploadSubDir;
+    $subDirClean = (strpos($uploadSubDir, 'uploads') === 0) ? substr($uploadSubDir, 7) : $uploadSubDir;
+    $subDirClean = trim($subDirClean, '/\\');
+
+    $fullTargetDir = $laravelStoragePath . DIRECTORY_SEPARATOR . 'uploads' . DIRECTORY_SEPARATOR . $subDirClean;
 
     if (!file_exists($fullTargetDir)) {
-      mkdir($fullTargetDir, 0777, true);
+      if (!mkdir($fullTargetDir, 0777, true)) {
+        return null;
+      }
     }
 
     $prefix = (strpos($uploadSubDir, 'profile') !== false) ? 'profile_' : 'reg_';
@@ -70,8 +74,7 @@ class StudentProfileController extends Controller
     $targetFile = $fullTargetDir . DIRECTORY_SEPARATOR . $fileName;
 
     if (move_uploaded_file($file['tmp_name'], $targetFile)) {
-      // Mahalaga: Forward slash (/) ang i-save sa DB para sa URL compatibility
-      return 'uploads/' . basename($uploadSubDir) . '/' . $fileName;
+      return 'uploads/' . $subDirClean . '/' . $fileName;
     }
 
     return null;
@@ -123,9 +126,9 @@ class StudentProfileController extends Controller
       }
 
       $profile['allow_edit'] = $profile['can_edit_profile'] ?? 0;
-      $this->json(['success' => true, 'profile' => $profile]);
+      $this->json(['success' => true, 'profile' => $profile], 200);
     } catch (\Exception $e) {
-      error_log("StudentProfileController::getProfile Error: " . $e->getMessage());
+      error_log("getProfile Exception: " . $e->getMessage());
       $this->json(['success' => false, 'message' => $e->getMessage()], 500);
     }
   }
@@ -175,22 +178,16 @@ class StudentProfileController extends Controller
         ], 403);
       }
 
-      // --- FILE UPLOAD CHECKS ---
-      $hasExistingProfilePic = !empty($profile['profile_picture']);
       $isNewProfilePicUploaded = (isset($_FILES['profile_image']) && $_FILES['profile_image']['error'] === 0);
-
-      if (!$hasExistingProfilePic && !$isNewProfilePicUploaded) {
-        return $this->json(['success' => false, 'message' => 'Profile picture is required.'], 400);
-      }
-
-      $hasExistingRegForm = !empty($profile['registration_form']);
       $isNewRegFormUploaded = (isset($_FILES['reg_form']) && $_FILES['reg_form']['error'] === 0);
 
-      if (!$hasExistingRegForm && !$isNewRegFormUploaded) {
+      if (empty($profile['profile_picture']) && !$isNewProfilePicUploaded) {
+        return $this->json(['success' => false, 'message' => 'Profile picture is required.'], 400);
+      }
+      if (empty($profile['registration_form']) && !$isNewRegFormUploaded) {
         return $this->json(['success' => false, 'message' => 'Registration form is required.'], 400);
       }
 
-      // --- Data Construction ---
       $fullName = trim(implode(' ', array_filter([
         $data['first_name'],
         $data['middle_name'] ?? null,
@@ -207,13 +204,12 @@ class StudentProfileController extends Controller
         'email' => $data['email']
       ];
 
-      // --- PROFILE IMAGE UPLOAD ---
-      $imagePath = null;
+      $finalProfilePicPath = $profile['profile_picture'];
       if ($isNewProfilePicUploaded) {
         $validation = $this->validateImageUpload($_FILES['profile_image']);
         if ($validation !== true) return $this->json(['success' => false, 'message' => $validation], 400);
 
-        $imagePath = $this->handleFileUpload($_FILES['profile_image'], "uploads/profile_images");
+        $imagePath = $this->handleFileUpload($_FILES['profile_image'], "profile_images");
 
         if ($imagePath === null) {
           return $this->json([
@@ -221,9 +217,9 @@ class StudentProfileController extends Controller
             'message' => 'Failed to move file. Check if the folder exists and is writable.'
           ], 500);
         }
-
-        $userData['profile_picture'] = $imagePath;
+        $finalProfilePicPath = $imagePath;
       }
+      $userData['profile_picture'] = $finalProfilePicPath;
 
       $this->userRepo->updateUser($currentUserId, $userData);
 
@@ -239,27 +235,35 @@ class StudentProfileController extends Controller
         $studentData['can_edit_profile'] = 0;
       }
 
-      // --- REG FORM UPLOAD (FIXED: Mag-u-upload lang kapag may bagong file) ---
-      $pdfPath = null;
+      $finalRegFormPath = $profile['registration_form'];
       if ($isNewRegFormUploaded) {
         $validation = $this->validatePDFUpload($_FILES['reg_form']);
         if ($validation !== true) return $this->json(['success' => false, 'message' => $validation], 400);
-        $pdfPath = $this->handleFileUpload($_FILES['reg_form'], "uploads/reg_forms"); // Fixed path
-        $studentData['registration_form'] = $pdfPath;
+
+        $pdfPath = $this->handleFileUpload($_FILES['reg_form'], "reg_forms");
+
+        if ($pdfPath === null) {
+          return $this->json([
+            'success' => false,
+            'message' => 'Failed to move registration form. Check if the folder exists and is writable.'
+          ], 500);
+        }
+        $finalRegFormPath = $pdfPath;
       }
+      $studentData['registration_form'] = $finalRegFormPath;
 
       $this->studentRepo->updateStudentProfile($currentUserId, $studentData);
 
       if (isset($_SESSION['user_data'])) {
         $_SESSION['user_data']['fullname'] = $fullName;
-        if ($imagePath) {
-          $_SESSION['user_data']['profile_picture'] = $imagePath;
+        if ($finalProfilePicPath) {
+          $_SESSION['user_data']['profile_picture'] = $finalProfilePicPath;
         }
       }
 
-      $this->json(['success' => true, 'message' => 'Profile updated successfully!']);
+      $this->json(['success' => true, 'message' => 'Profile updated successfully!'], 200);
     } catch (\Exception $e) {
-      error_log("StudentProfileController::updateProfile Error: " . $e->getMessage());
+      error_log("updateProfile Exception: " . $e->getMessage());
       $this->json(['success' => false, 'message' => 'Error updating profile: ' . $e->getMessage()], 500);
     }
   }

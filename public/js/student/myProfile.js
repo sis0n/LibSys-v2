@@ -347,7 +347,8 @@ document.addEventListener("DOMContentLoaded", () => {
 
         if (data.profile.profile_picture) {
           const cleanPath = data.profile.profile_picture.replace(/^\//, "");
-          const finalUrl = window.LARAVEL_URL + cleanPath; // Isang variable para sa consistency
+          // Construct URL pointing to Laravel's symlinked storage
+          const finalUrl = window.LARAVEL_URL + 'storage/' + cleanPath;
 
           profilePreview.src = finalUrl;
           profilePreview.classList.remove("hidden");
@@ -360,11 +361,16 @@ document.addEventListener("DOMContentLoaded", () => {
         }
 
         if (profile.registration_form) {
-          viewRegForm.href = profile.registration_form;
+          const cleanRegFormPath = profile.registration_form.replace(/^\//, "");
+          viewRegForm.href = window.LARAVEL_URL + 'storage/' + cleanRegFormPath;
           viewRegForm.classList.remove("hidden");
           uploadBtn.classList.add("hidden");
+          if (!isEditing && removeRegForm) removeRegForm.classList.add("hidden");
+          else if (isEditing && removeRegForm) removeRegForm.classList.remove("hidden");
         } else {
           viewRegForm.classList.add("hidden");
+          if (isEditing) uploadBtn.classList.remove("hidden");
+          if (removeRegForm) removeRegForm.classList.add("hidden");
         }
 
         if (profile.profile_updated == 0 || profile.can_edit_profile == 1) {
@@ -425,7 +431,19 @@ document.addEventListener("DOMContentLoaded", () => {
       uploadLabel.classList.remove("hidden");
       uploadBtn.classList.remove("hidden");
       regFormUpload.disabled = false;
-      viewRegForm.classList.add("hidden");
+      viewRegForm.classList.remove("hidden"); // Always show view, then hide if no form
+
+      if (originalProfileData.registration_form) {
+        if (removeRegForm) removeRegForm.classList.remove("hidden");
+        uploadBtn.classList.add("hidden");
+        // Construct URL for existing registration form
+        const cleanRegFormPath = originalProfileData.registration_form.replace(/^\//, "");
+        viewRegForm.href = window.LARAVEL_URL + 'storage/' + cleanRegFormPath;
+      } else {
+        viewRegForm.classList.add("hidden");
+        if (removeRegForm) removeRegForm.classList.add("hidden");
+        uploadBtn.classList.remove("hidden"); // Show upload button if no existing form in edit mode
+      }
     } else {
       loadProfile();
 

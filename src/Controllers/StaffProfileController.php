@@ -33,43 +33,47 @@ class StaffProfileController extends Controller
       return null;
     }
 
-    // LISTAHAN NG POSSIBLE PATHS (I-adjust mo base sa folder names niyo)
-    // Subukan nating hanapin ang 'backend' folder
     $possiblePaths = [
-      realpath(__DIR__ . '/../../../../backend/public/'), // Path A
-      realpath($_SERVER['DOCUMENT_ROOT'] . '/backend/public/'), // Path B
-      'C:/Users/adria/Desktop/backend/public/' // Path C (Hardcoded fallback para sa PC mo)
+      realpath(__DIR__ . '/../../../../backend/storage/app/public/'),
+      realpath($_SERVER['DOCUMENT_ROOT'] . '/backend/storage/app/public/'),
+      realpath($_SERVER['DOCUMENT_ROOT'] . '/../backend/storage/app/public/'),
+      'C:/xampp/htdocs/backend/storage/app/public/',
+      'C:/Users/adria/Desktop/backend/storage/app/public/'
     ];
 
-    $laravelPublicPath = null;
+    $laravelStoragePath = null;
     foreach ($possiblePaths as $path) {
       if ($path && file_exists($path)) {
-        $laravelPublicPath = $path;
+        $laravelStoragePath = $path;
         break;
       }
     }
 
-    if (!$laravelPublicPath) {
-      // Ito ang magsasabi sa atin kung bakit fail
-      error_log("Upload Error: All possible paths failed for " . __DIR__);
+    if (!$laravelStoragePath) {
+      error_log("Upload Error: Could not dynamically locate Laravel storage path.");
       return null;
     }
 
     $uploadSubDir = trim($uploadSubDir, '/\\');
-    $fullTargetDir = $laravelPublicPath . DIRECTORY_SEPARATOR . $uploadSubDir;
+    $subDirClean = (strpos($uploadSubDir, 'uploads') === 0) ? substr($uploadSubDir, 7) : $uploadSubDir;
+    $subDirClean = trim($subDirClean, '/\\');
+
+    $fullTargetDir = $laravelStoragePath . DIRECTORY_SEPARATOR . 'uploads' . DIRECTORY_SEPARATOR . $subDirClean;
 
     if (!file_exists($fullTargetDir)) {
-      mkdir($fullTargetDir, 0777, true);
+      if (!mkdir($fullTargetDir, 0777, true)) {
+        return null;
+      }
     }
 
-    $prefix = (strpos($uploadSubDir, 'profile') !== false) ? 'profile_' : 'reg_';
+    $prefix = (strpos($uploadSubDir, 'profile') !== false) ? 'profile_' : 'file_';
     $extension = strtolower(pathinfo($file['name'], PATHINFO_EXTENSION));
     $fileName = $prefix . ($_SESSION['user_id'] ?? 'user') . '_' . time() . '.' . $extension;
 
     $targetFile = $fullTargetDir . DIRECTORY_SEPARATOR . $fileName;
 
     if (move_uploaded_file($file['tmp_name'], $targetFile)) {
-      return 'uploads/' . basename($uploadSubDir) . '/' . $fileName;
+      return 'uploads/' . $subDirClean . '/' . $fileName;
     }
 
     return null;
@@ -93,109 +97,91 @@ class StaffProfileController extends Controller
 
   public function getProfile()
   {
-    $currentUserId = $_SESSION['user_id'] ?? null;
-    if (!$currentUserId) return $this->json(['success' => false, 'message' => 'Unauthorized'], 401);
+    try {
+      $currentUserId = $_SESSION['user_id'] ?? null;
+      if (!$currentUserId) return $this->json(['success' => false, 'message' => 'Unauthorized'], 401);
 
-    $profile = $this->staffRepo->getProfileByUserId($currentUserId);
-    if (!$profile) return $this->json(['success' => false, 'message' => 'Profile not found.'], 404);
+      $profile = $this->staffRepo->getProfileByUserId($currentUserId);
+      if (!$profile) return $this->json(['success' => false, 'message' => 'Profile not found.'], 404);
 
-    $profile['allow_edit'] = 1; // Staff can always edit
+      $profile['allow_edit'] = 1; // Staff can always edit
 
-    $this->json(['success' => true, 'profile' => $profile]);
+      $this->json(['success' => true, 'profile' => $profile]);
+    } catch (\Exception $e) {
+      error_log("StaffProfileController::getProfile Error: " . $e->getMessage());
+      $this->json(['success' => false, 'message' => $e->getMessage()], 500);
+    }
   }
 
   public function updateProfile()
   {
-    $currentUserId = $_SESSION['user_id'] ?? null;
-    if (!$currentUserId) {
-      return $this->json(['success' => false, 'message' => 'Unauthorized'], 401);
-    }
+    try {
+      $currentUserId = $_SESSION['user_id'] ?? null;
+      if (!$currentUserId) return $this->json(['success' => false, 'message' => 'Unauthorized'], 401);
 
-    $data = $_POST;
-    $profile = $this->staffRepo->getProfileByUserId($currentUserId);
-    if (!$profile) {
-      return $this->json(['success' => false, 'message' => 'Profile not found.'], 404);
-    }
+      $data = $_POST;
+      $profile = $this->staffRepo->getProfileByUserId($currentUserId);
+      if (!$profile) return $this->json(['success' => false, 'message' => 'Profile not found.'], 404);
 
-    // --- Ensure profile picture exists ---
-    $hasUploadedImage = isset($_FILES['profile_image']) && $_FILES['profile_image']['error'] === 0;
-    $hasExistingImage = !empty($profile['profile_picture']) && trim($profile['profile_picture']) !== '';
-
-    if (!$hasUploadedImage && !$hasExistingImage) {
-      return $this->json([
-        'success' => false,
-        'message' => 'Profile picture is required. Please upload one before saving.'
-      ], 400);
-    }
-
-    // --- Validate required fields ---
-    $requiredFields = ['first_name', 'last_name', 'email', 'position', 'contact'];
-    $missingFields = [];
-    foreach ($requiredFields as $field) {
-      if (!isset($data[$field]) || trim($data[$field]) === '') $missingFields[] = $field;
-    }
-    if (!empty($missingFields)) {
-      return $this->json([
-        'success' => false,
-        'message' => 'Missing required fields: ' . implode(', ', $missingFields)
-      ], 400);
-    }
-
-    // --- Validate contact and email ---
-    if (!preg_match('/^\d{11}$/', $data['contact'])) {
-      return $this->json(['success' => false, 'message' => 'Contact number must be 11 digits.'], 400);
-    }
-    if (!filter_var($data['email'], FILTER_VALIDATE_EMAIL)) {
-      return $this->json(['success' => false, 'message' => 'Invalid email address.'], 400);
-    }
-
-    // --- Handle profile image upload ---
-    if ($hasUploadedImage) {
-      $validation = $this->validateImageUpload($_FILES['profile_image']);
-      if ($validation !== true) {
-        return $this->json(['success' => false, 'message' => $validation], 400);
+      $requiredFields = ['first_name', 'last_name', 'email', 'position', 'contact'];
+      $missingFields = [];
+      foreach ($requiredFields as $field) {
+        if (!isset($data[$field]) || trim($data[$field]) === '') $missingFields[] = $field;
       }
-      $imagePath = $this->handleFileUpload($_FILES['profile_image'], "uploads/profile_images");
-    }
-
-    // --- Prepare user data for update ---
-    $fullName = trim(implode(' ', array_filter([
-      $data['first_name'],
-      $data['middle_name'] ?? null,
-      $data['last_name'],
-      $data['suffix'] ?? null
-    ])));
-
-    $userData = [
-      'first_name' => $data['first_name'],
-      'middle_name' => $data['middle_name'] ?? null,
-      'last_name' => $data['last_name'],
-      'suffix' => $data['suffix'] ?? null,
-      'full_name' => $fullName,
-      'email' => $data['email']
-    ];
-
-    if (isset($imagePath)) {
-      $userData['profile_picture'] = $imagePath;
-    }
-
-    $this->userRepo->updateUser($currentUserId, $userData);
-
-    // --- Update staff-specific data ---
-    $staffData = [
-      'position' => $data['position'],
-      'contact' => $data['contact'],
-      'profile_updated' => 1
-    ];
-    $this->staffRepo->updateStaffProfile($currentUserId, $staffData);
-
-    if (isset($_SESSION['user_data'])) {
-      $_SESSION['user_data']['fullname'] = $fullName;
-      if ($imagePath) {
-        $_SESSION['user_data']['profile_picture'] = $imagePath;
+      if (!empty($missingFields)) {
+        return $this->json(['success' => false, 'message' => 'Missing required fields: ' . implode(', ', $missingFields)], 400);
       }
-    }
 
-    return $this->json(['success' => true, 'message' => 'Profile updated successfully!']);
+      $isNewFileUploaded = (isset($_FILES['profile_image']) && $_FILES['profile_image']['error'] === 0);
+      if (empty($profile['profile_picture']) && !$isNewFileUploaded) {
+        return $this->json(['success' => false, 'message' => 'Profile picture is required.'], 400);
+      }
+
+      if (!preg_match('/^\d{11}$/', $data['contact'])) {
+        return $this->json(['success' => false, 'message' => 'Contact number must be 11 digits.'], 400);
+      }
+      if (!filter_var($data['email'], FILTER_VALIDATE_EMAIL)) {
+        return $this->json(['success' => false, 'message' => 'Invalid email address.'], 400);
+      }
+
+      $fullName = trim(implode(' ', array_filter([$data['first_name'], $data['middle_name'] ?? null, $data['last_name'], $data['suffix'] ?? null])));
+      $userData = [
+        'first_name' => $data['first_name'],
+        'middle_name' => $data['middle_name'] ?? null,
+        'last_name' => $data['last_name'],
+        'suffix' => $data['suffix'] ?? null,
+        'full_name' => $fullName,
+        'email' => $data['email']
+      ];
+
+      $finalProfilePicPath = $profile['profile_picture'];
+      if ($isNewFileUploaded) {
+        $validation = $this->validateImageUpload($_FILES['profile_image']);
+        if ($validation !== true) return $this->json(['success' => false, 'message' => $validation], 400);
+        $imagePath = $this->handleFileUpload($_FILES['profile_image'], "profile_images");
+        if ($imagePath === null) return $this->json(['success' => false, 'message' => 'Failed to move file.'], 500);
+        $finalProfilePicPath = $imagePath;
+      }
+      $userData['profile_picture'] = $finalProfilePicPath;
+
+      $this->userRepo->updateUser($currentUserId, $userData);
+
+      $staffData = [
+        'position' => $data['position'],
+        'contact' => $data['contact'],
+        'profile_updated' => 1
+      ];
+      $this->staffRepo->updateStaffProfile($currentUserId, $staffData);
+
+      if (isset($_SESSION['user_data'])) {
+        $_SESSION['user_data']['fullname'] = $fullName;
+        if ($finalProfilePicPath) $_SESSION['user_data']['profile_picture'] = $finalProfilePicPath;
+      }
+
+      $this->json(['success' => true, 'message' => 'Profile updated successfully!']);
+    } catch (\Exception $e) {
+      error_log("StaffProfileController::updateProfile Error: " . $e->getMessage());
+      $this->json(['success' => false, 'message' => 'Error updating profile: ' . $e->getMessage()], 500);
+    }
   }
 }

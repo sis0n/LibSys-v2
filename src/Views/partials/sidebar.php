@@ -374,6 +374,12 @@ $baseUrl = BASE_URL;
                     </div>
                 </div>
 
+                <a href="<?= $baseUrl ?>/libraryPolicies"
+                    class="flex items-center gap-x-3 px-3 py-2 rounded-lg transition <?= $currentPage === 'libraryPolicies' ? 'bg-green-600 text-white font-medium' : 'hover:bg-orange-100 text-orange-900' ?>">
+                    <i class="ph ph-scroll text-2xl"></i>
+                    <span>Library Policies</span>
+                </a>
+
                 <div class="sidebar-dropdown" data-pages='["myProfile", "changePassword"]'>
                     <button class="sidebar-dropdown-toggle flex items-center justify-between w-full gap-x-3 px-3 py-2 rounded-lg transition <?= (in_array($currentPage, ["myProfile", "changePassword"])) ? 'bg-orange-100 text-orange-900' : 'hover:bg-orange-100 text-orange-900' ?>">
                         <span class="flex items-center gap-x-3">
@@ -466,7 +472,7 @@ $baseUrl = BASE_URL;
                         <span class="text-base">Restore Books</span>
                     </a>
                 <?php endif; ?>
-                
+
                 <?php if ($hasPermission('restore users')): ?>
                     <a href="<?= $baseUrl ?>/restoreUser"
                         class="flex items-center gap-x-3 px-3 py-2 rounded-lg transition <?= $currentPage === 'restoreUser' ? 'bg-green-600 text-white font-medium' : 'hover:bg-orange-100 text-orange-900' ?>">

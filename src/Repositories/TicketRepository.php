@@ -97,15 +97,15 @@ class TicketRepository
     return ['complete' => true, 'message' => 'Profile is complete.'];
   }
 
-  public function getCartItems(int $studentId): array
+  public function getCartItems(int $userId): array
   {
     $stmt = $this->db->prepare("
             SELECT c.cart_id, c.book_id, b.title, b.author, b.accession_number
             FROM carts c
             JOIN books b ON c.book_id = b.book_id
-            WHERE c.student_id = :sid 
+            WHERE c.user_id = :uid 
         ");
-    $stmt->execute(['sid' => $studentId]);
+    $stmt->execute(['uid' => $userId]);
     return $stmt->fetchAll(PDO::FETCH_ASSOC);
   }
 
@@ -123,10 +123,10 @@ class TicketRepository
     }
   }
 
-  public function clearCart(int $studentId): void
+  public function clearCart(int $userId): void
   {
-    $stmt = $this->db->prepare("DELETE FROM carts WHERE student_id = :sid");
-    $stmt->execute(['sid' => $studentId]);
+    $stmt = $this->db->prepare("DELETE FROM carts WHERE user_id = :uid");
+    $stmt->execute(['uid' => $userId]);
   }
 
   public function getStudentInfo(int $studentId): array
@@ -173,7 +173,7 @@ class TicketRepository
     return $transaction;
   }
 
-  public function getCartItemsByIds(int $studentId, array $cartIds): array
+  public function getCartItemsByIds(int $userId, array $cartIds): array
   {
     $cartIds = array_map('intval', $cartIds);
     if (empty($cartIds)) return [];
@@ -183,26 +183,26 @@ class TicketRepository
             SELECT c.cart_id, c.book_id, b.title, b.author, b.accession_number
             FROM carts c
             JOIN books b ON c.book_id = b.book_id
-            WHERE c.student_id = ? AND c.cart_id IN ($placeholders)
+            WHERE c.user_id = ? AND c.cart_id IN ($placeholders)
         ");
 
-    $params = array_merge([$studentId], $cartIds);
+    $params = array_merge([$userId], $cartIds);
     $stmt->execute($params);
     $result = $stmt->fetchAll(PDO::FETCH_ASSOC);
     return $result;
   }
 
-  public function removeCartItemsByIds(int $studentId, array $cartIds): void
+  public function removeCartItemsByIds(int $userId, array $cartIds): void
   {
     if (empty($cartIds)) return;
     $cartIds = array_map('intval', $cartIds);
     $placeholders = implode(',', array_fill(0, count($cartIds), '?'));
 
     $stmt = $this->db->prepare(
-      "DELETE FROM carts WHERE student_id = ? AND cart_id IN ($placeholders)"
+      "DELETE FROM carts WHERE user_id = ? AND cart_id IN ($placeholders)"
     );
 
-    $stmt->execute(array_merge([$studentId], $cartIds));
+    $stmt->execute(array_merge([$userId], $cartIds));
   }
 
   public function getTransactionItems(int $transactionId): array

@@ -3,18 +3,18 @@
 namespace App\Controllers;
 
 use App\Repositories\QRScannerRepository;
+use App\Repositories\LibraryPolicyRepository;
 use App\Core\Controller;
 
 class QRScannerController extends Controller
 {
   protected $qrScannerRepository;
-  const MAX_BORROW_LIMIT_STUDENT = 5;
-  const MAX_BORROW_LIMIT_FACULTY = 10;
-  const MAX_BORROW_LIMIT_STAFF = 7;
+  protected $policyRepo;
 
   public function __construct()
   {
     $this->qrScannerRepository = new QRScannerRepository();
+    $this->policyRepo = new LibraryPolicyRepository();
   }
 
   private function processTicketLookup(string $transactionCode)
@@ -39,18 +39,18 @@ class QRScannerController extends Controller
       $userType = 'faculty';
       $idColumn = 'faculty_id';
       $idValue = (int) $transaction['faculty_id'];
-      $MAX_LIMIT = self::MAX_BORROW_LIMIT_FACULTY;
     } elseif (!empty($transaction['staff_id'])) {
       $userType = 'staff';
       $idColumn = 'staff_id';
       $idValue = (int) $transaction['staff_id'];
-      $MAX_LIMIT = self::MAX_BORROW_LIMIT_STAFF;
     } else {
       $userType = 'student';
       $idColumn = 'student_id';
       $idValue = (int) $transaction['student_id'];
-      $MAX_LIMIT = self::MAX_BORROW_LIMIT_STUDENT;
     }
+
+    $policy = $this->policyRepo->getPolicyByRole($userType);
+    $MAX_LIMIT = $policy ? (int)$policy['max_books'] : 5;
 
     $currentBorrowed = $this->qrScannerRepository->getBorrowedCount($idColumn, $idValue, $transactionCode);
     $itemsInTicket = count($this->qrScannerRepository->getTransactionItems($transactionCode));
@@ -69,7 +69,6 @@ class QRScannerController extends Controller
     $suffix = !empty($transaction['suffix']) ? ' ' . $transaction['suffix'] : '';
     $fullName = trim("{$transaction['first_name']} {$middleInitial}{$transaction['last_name']}{$suffix}");
 
-    // --- Profile Picture URL Construction ---
     $profilePicPath = $transaction['profile_picture'];
     $profilePicUrl = null;
 
@@ -94,7 +93,6 @@ class QRScannerController extends Controller
       $userInfo['course'] = $transaction['course_code'] ?? 'N/A';
       $userInfo['yearsection'] = ($transaction['year_level'] ?? '') . '-' . ($transaction['section'] ?? '');
 
-      // --- Registration Form URL Construction ---
       $regFormPath = $transaction['registration_form'] ?? null;
       $regFormUrl = null;
       if ($regFormPath) {
@@ -107,10 +105,9 @@ class QRScannerController extends Controller
       }
       $userInfo['registrationFormUrl'] = $regFormUrl;
     } elseif ($userType === 'faculty') {
-      // FIXED: Gamitin ang unique_faculty_id
       $userInfo['id'] = $transaction['unique_faculty_id'] ?? 'N/A';
       $userInfo['department'] = $transaction['college_code'] ?? 'N/A';
-    } else { // Staff
+    } else {
       $userInfo['id'] = $transaction['employee_id'] ?? 'N/A';
       $userInfo['position'] = $transaction['position'] ?? 'N/A';
       $userInfo['contact'] = $transaction['contact'] ?? 'N/A';
@@ -183,23 +180,22 @@ class QRScannerController extends Controller
       return;
     }
 
-    // Determine user type and limits
     if (!empty($transaction['faculty_id'])) {
       $idColumn = 'faculty_id';
       $idValue = $transaction['faculty_id'];
-      $MAX_LIMIT = self::MAX_BORROW_LIMIT_FACULTY;
       $userType = 'faculty';
     } elseif (!empty($transaction['staff_id'])) {
       $idColumn = 'staff_id';
       $idValue = $transaction['staff_id'];
-      $MAX_LIMIT = self::MAX_BORROW_LIMIT_STAFF;
       $userType = 'staff';
     } else {
       $idColumn = 'student_id';
       $idValue = $transaction['student_id'];
-      $MAX_LIMIT = self::MAX_BORROW_LIMIT_STUDENT;
       $userType = 'student';
     }
+
+    $policy = $this->policyRepo->getPolicyByRole($userType);
+    $MAX_LIMIT = $policy ? (int)$policy['max_books'] : 5;
 
     $currentBorrowed = $this->qrScannerRepository->getBorrowedCount($idColumn, $idValue, $transactionCode);
 
@@ -237,7 +233,6 @@ class QRScannerController extends Controller
       $middleInitial = !empty($h['middle_name']) ? strtoupper(substr($h['middle_name'], 0, 1)) . '. ' : '';
       $suffix = !empty($h['suffix']) ? ' ' . $h['suffix'] : '';
 
-      // Final Name Construction
       $fullName = trim("{$h['first_name']} {$middleInitial}{$h['last_name']}{$suffix}");
 
       $borrowedDateTime = $h['borrowed_at']
@@ -248,7 +243,6 @@ class QRScannerController extends Controller
         ? date('M d, Y h:i A', strtotime($h['returned_at']))
         : 'Not yet returned';
 
-      // Set user ID based on role
       $userIdValue = '';
       if ($isStudent) {
         $userIdValue = $h['student_number'] ?? $h['user_identifier'];
@@ -259,7 +253,7 @@ class QRScannerController extends Controller
       }
 
       return [
-        'userName' => $fullName, // Ibinigay na ang tamang full name
+        'userName' => $fullName,
         'userId' => $userIdValue,
         'userType' => $isFaculty ? 'Faculty' : ($isStudent ? 'Student' : 'Staff/Guest'),
         'itemsBorrowed' => (int) $h['items_borrowed'],

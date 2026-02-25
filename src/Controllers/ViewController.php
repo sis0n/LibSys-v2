@@ -95,7 +95,8 @@ class ViewController extends Controller
       'backup' => 'backup',
       'restoreBooks' => 'restore books',
       'restoreUser' => 'restore users',
-      'userManagement' => 'user management'
+      'userManagement' => 'user management',
+      'libraryPolicies' => 'superadmin'
     ];
 
     $universalPages = [

@@ -5,6 +5,7 @@ namespace App\Controllers;
 use App\Core\Controller;
 use App\Repositories\StaffTicketRepository;
 use App\Repositories\StaffProfileRepository;
+use App\Repositories\LibraryPolicyRepository;
 use Endroid\QrCode\Builder\Builder;
 use Endroid\QrCode\Encoding\Encoding;
 use Endroid\QrCode\ErrorCorrectionLevel;
@@ -15,11 +16,13 @@ class StaffTicketController extends Controller
 {
   protected StaffTicketRepository $ticketRepo;
   protected StaffProfileRepository $staffProfileRepo;
+  protected LibraryPolicyRepository $policyRepo;
 
   public function __construct()
   {
     $this->ticketRepo = new StaffTicketRepository();
     $this->staffProfileRepo = new StaffProfileRepository();
+    $this->policyRepo = new LibraryPolicyRepository();
   }
 
   private function generateQr(string $transactionCode): string
@@ -70,7 +73,10 @@ class StaffTicketController extends Controller
     header('Content-Type: application/json');
 
     $userId = $_SESSION['user_id'] ?? null;
-    $MAX_BOOKS = 7;
+
+    $policy = $this->policyRepo->getPolicyByRole('staff');
+    $MAX_BOOKS = $policy ? (int)$policy['max_books'] : 7;
+    $DURATION_DAYS = $policy ? (int)$policy['borrow_duration_days'] : 14;
 
     if (!$userId) {
       http_response_code(403);
@@ -78,17 +84,15 @@ class StaffTicketController extends Controller
       exit;
     }
 
-    // --- NEW, CENTRALIZED PROFILE COMPLETION CHECK ---
     $profile = $this->staffProfileRepo->getProfileByUserId((int)$userId);
     if (!$profile || !$profile['is_qualified']) {
-        http_response_code(400);
-        echo json_encode([
-            "success" => false, 
-            "message" => "Profile details are incomplete. Please complete your profile before checking out."
-        ]);
-        exit;
+      http_response_code(400);
+      echo json_encode([
+        "success" => false,
+        "message" => "Profile details are incomplete. Please complete your profile before checking out."
+      ]);
+      exit;
     }
-    // --- END OF CHECK ---
 
     $staffId = $this->ticketRepo->getStaffIdByUserId((int)$userId);
     if (!$staffId) {
@@ -148,7 +152,7 @@ class StaffTicketController extends Controller
         $message = 'Checkout successful! Items added to your pending ticket.';
       } else {
         $transactionCode = strtoupper(uniqid());
-        $dueDate = date("Y-m-d H:i:s", strtotime("+14 days"));
+        $dueDate = date("Y-m-d H:i:s", strtotime("+{$DURATION_DAYS} days"));
         $transactionId = $this->ticketRepo->createPendingTransactionForStaff($staffId, $transactionCode, $dueDate, 15);
 
         $message = 'Checkout successful! A new Borrowing Ticket has been created.';
@@ -326,10 +330,8 @@ class StaffTicketController extends Controller
       exit;
     }
 
-    // Expire old pending transactions
     $this->ticketRepo->expireOldPendingTransactionsStaff();
 
-    // Get full staff info by staff_id
     $staffDetails = $this->ticketRepo->getStaffFullInfoByStaffId($staffId);
     $staffData = [
       'employee_id' => $staffDetails['employee_id'] ?? 'N/A',
@@ -355,7 +357,6 @@ class StaffTicketController extends Controller
       'books_count' => 0
     ];
 
-    // Check pending transaction
     $pendingTransaction = $this->ticketRepo->getPendingTransactionByStaffId($staffId);
     if ($pendingTransaction) {
       $status = $pendingTransaction['status'];
@@ -376,7 +377,6 @@ class StaffTicketController extends Controller
       exit;
     }
 
-    // Check borrowed transaction
     $borrowedTransaction = $this->ticketRepo->getBorrowedTransactionByStaffId($staffId);
     if ($borrowedTransaction) {
       $items = $this->ticketRepo->getTransactionItems((int)$borrowedTransaction['transaction_id']);
@@ -392,7 +392,6 @@ class StaffTicketController extends Controller
       exit;
     }
 
-    // No transaction found
     echo json_encode($response);
     exit;
   }

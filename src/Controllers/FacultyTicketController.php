@@ -5,6 +5,7 @@ namespace App\Controllers;
 use App\Core\Controller;
 use App\Repositories\FacultyTicketRepository;
 use App\Repositories\FacultyProfileRepository;
+use App\Repositories\LibraryPolicyRepository;
 use Endroid\QrCode\Builder\Builder;
 use Endroid\QrCode\Encoding\Encoding;
 use Endroid\QrCode\ErrorCorrectionLevel;
@@ -15,11 +16,13 @@ class FacultyTicketController extends Controller
 {
   protected FacultyTicketRepository $ticketRepo;
   protected FacultyProfileRepository $facultyProfileRepo;
+  protected LibraryPolicyRepository $policyRepo;
 
   public function __construct()
   {
     $this->ticketRepo = new FacultyTicketRepository();
     $this->facultyProfileRepo = new FacultyProfileRepository();
+    $this->policyRepo = new LibraryPolicyRepository();
   }
 
   private function generateQr(string $transactionCode): string
@@ -70,7 +73,10 @@ class FacultyTicketController extends Controller
     header('Content-Type: application/json');
 
     $userId = $_SESSION['user_id'] ?? null;
-    $MAX_BOOKS = 10;
+
+    $policy = $this->policyRepo->getPolicyByRole('faculty');
+    $MAX_BOOKS = $policy ? (int)$policy['max_books'] : 10;
+    $DURATION_DAYS = $policy ? (int)$policy['borrow_duration_days'] : 14;
 
     if (!$userId) {
       http_response_code(403);
@@ -78,17 +84,15 @@ class FacultyTicketController extends Controller
       exit;
     }
 
-    // --- NEW, CENTRALIZED PROFILE COMPLETION CHECK ---
     $profile = $this->facultyProfileRepo->getProfileByUserId((int)$userId);
     if (!$profile || !$profile['is_qualified']) {
-        http_response_code(400);
-        echo json_encode([
-            "success" => false, 
-            "message" => "Profile details are incomplete. Please complete your profile before checking out."
-        ]);
-        exit;
+      http_response_code(400);
+      echo json_encode([
+        "success" => false,
+        "message" => "Profile details are incomplete. Please complete your profile before checking out."
+      ]);
+      exit;
     }
-    // --- END OF CHECK ---
 
     $facultyId = $this->ticketRepo->getFacultyIdByUserId((int)$userId);
     if (!$facultyId) {
@@ -148,7 +152,7 @@ class FacultyTicketController extends Controller
         $message = 'Checkout successful! Items added to your pending ticket.';
       } else {
         $transactionCode = strtoupper(uniqid());
-        $dueDate = date("Y-m-d H:i:s", strtotime("+14 days"));
+        $dueDate = date("Y-m-d H:i:s", strtotime("+{$DURATION_DAYS} days"));
         $transactionId = $this->ticketRepo->createPendingTransactionForFaculty($facultyId, $transactionCode, $dueDate, 15);
 
         $message = 'Checkout successful! A new Borrowing Ticket has been created.';
@@ -375,7 +379,6 @@ class FacultyTicketController extends Controller
       exit;
     }
 
-    // No transaction found
     echo json_encode([
       'success' => true,
       'status' => 'none',
