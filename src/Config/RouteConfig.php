@@ -226,6 +226,12 @@ class RouteConfig
     $router->get('api/superadmin/auditLogs/fetch', 'AuditLogController@fetch', ['superadmin']);
     $router->get('auditLogs', 'AuditLogController@index', ['superadmin']);
 
+    $router->get('api/superadmin/studentPromotion/fetch', 'StudentPromotionController@fetch', ['superadmin']);
+    $router->post('api/superadmin/studentPromotion/promote', 'StudentPromotionController@promote', ['superadmin']);
+    $router->post('api/superadmin/studentPromotion/deactivate', 'StudentPromotionController@deactivate', ['superadmin']);
+    $router->post('api/superadmin/studentPromotion/activate', 'StudentPromotionController@activate', ['superadmin']);
+    $router->get('studentPromotion', 'StudentPromotionController@index', ['superadmin']);
+
     $router->post('generate-report', 'DomPdfTemplateController@generateLibraryReport', ['superadmin']);
 
     $router->get('api/student/attendance/get', 'AttendanceController@getMyAttendance', ['student']);

@@ -267,9 +267,9 @@ $baseUrl = BASE_URL;
                     <span>Dashboard</span>
                 </a>
 
-                <div class="sidebar-dropdown" data-pages='["userManagement","bookManagement", "equipmentManagement"]'>
+                <div class="sidebar-dropdown" data-pages='["userManagement","bookManagement", "equipmentManagement", "studentPromotion"]'>
                     <button
-                        class="sidebar-dropdown-toggle flex items-center justify-between w-full gap-x-3 px-3 py-2 rounded-lg transition <?= (in_array($currentPage, ["userManagement", "bookManagement", "equipmentManagement"])) ? 'bg-orange-100 text-orange-900 font-semibold' : 'hover:bg-orange-100 text-orange-900' ?>">
+                        class="sidebar-dropdown-toggle flex items-center justify-between w-full gap-x-3 px-3 py-2 rounded-lg transition <?= (in_array($currentPage, ["userManagement", "bookManagement", "equipmentManagement", "studentPromotion"])) ? 'bg-orange-100 text-orange-900 font-semibold' : 'hover:bg-orange-100 text-orange-900' ?>">
                         <span class="flex items-center gap-x-3">
                             <i class="ph ph-folders text-2xl"></i>
                             <span class="text-base">Management</span>
@@ -281,6 +281,11 @@ $baseUrl = BASE_URL;
                             class="flex items-center gap-x-3 px-3 py-2 rounded-lg transition <?= $currentPage === 'userManagement' ? 'bg-green-600 text-white font-medium' : 'hover:bg-orange-100 text-orange-900' ?>">
                             <i class="ph ph-users text-xl"></i>
                             <span class="text-base text-sm">User Management</span>
+                        </a>
+                        <a href="<?= $baseUrl ?>/studentPromotion"
+                            class="flex items-center gap-x-3 px-3 py-2 rounded-lg transition <?= $currentPage === 'studentPromotion' ? 'bg-green-600 text-white font-medium' : 'hover:bg-orange-100 text-orange-900' ?>">
+                            <i class="ph ph-student text-xl"></i>
+                            <span class="text-base text-sm">Student Promotion</span>
                         </a>
                         <a href="<?= $baseUrl ?>/bookManagement"
                             class="flex items-center gap-x-3 px-3 py-2 rounded-lg transition <?= $currentPage === 'bookManagement' ? 'bg-green-600 text-white font-medium' : 'hover:bg-orange-100 text-orange-900' ?>">
