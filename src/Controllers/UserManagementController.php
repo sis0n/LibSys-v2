@@ -499,7 +499,11 @@ class UserManagementController extends Controller
       // --- END NG LOGIC ---
 
       if ($userUpdated || $modulesUpdated) {
-        $this->auditRepo->log($_SESSION['user_id'], 'UPDATE', 'USERS', $currentUser['username'], "Updated details/permissions for {$currentUser['first_name']} {$currentUser['last_name']}");
+        $details = "Updated details/permissions for {$currentUser['first_name']} {$currentUser['last_name']}";
+        if (!empty($data['password'])) {
+            $details .= " (Password was reset by Admin)";
+        }
+        $this->auditRepo->log($_SESSION['user_id'], 'UPDATE', 'USERS', $currentUser['username'], $details);
         echo json_encode([
           'success' => true,
           'message' => 'User updated successfully.'

@@ -41,6 +41,13 @@ class RestoreBookRepository
     }
   }
 
+  public function getBookById(int $id)
+  {
+    $stmt = $this->db->prepare("SELECT * FROM books WHERE book_id = ?");
+    $stmt->execute([$id]);
+    return $stmt->fetch(PDO::FETCH_ASSOC);
+  }
+
   public function restoreBook(int $bookId): bool
   {
     $this->db->beginTransaction();

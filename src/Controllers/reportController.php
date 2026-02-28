@@ -56,6 +56,32 @@ class ReportController extends Controller
         }
     }
 
+    public function getTopBorrowers()
+    {
+        header('Content-Type: application/json');
+        try {
+            $repository = new ReportRepository();
+            $data = $repository->getTopBorrowers();
+            echo json_encode(['success' => true, 'data' => $data]);
+        } catch (Exception $e) {
+            http_response_code(500);
+            echo json_encode(['success' => false, 'message' => 'Error fetching top borrowers report: ' . $e->getMessage()]);
+        }
+    }
+
+    public function getMostBorrowedBooks()
+    {
+        header('Content-Type: application/json');
+        try {
+            $repository = new ReportRepository();
+            $data = $repository->getMostBorrowedBooks();
+            echo json_encode(['success' => true, 'data' => $data]);
+        } catch (Exception $e) {
+            http_response_code(500);
+            echo json_encode(['success' => false, 'message' => 'Error fetching most borrowed books report: ' . $e->getMessage()]);
+        }
+    }
+
     public function getLibraryVisitsByDepartment()
     {
         header('Cache-Control: no-store, no-cache, must-revalidate, max-age=0');

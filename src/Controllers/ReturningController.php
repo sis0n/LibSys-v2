@@ -65,10 +65,28 @@ class ReturningController extends Controller
       return;
     }
 
+    $db = \App\Core\Database::getInstance()->getConnection();
+    $stmt = $db->prepare("
+        SELECT b.title, e.equipment_name, u.first_name, u.last_name
+        FROM borrow_transaction_items bti
+        JOIN borrow_transactions bt ON bti.transaction_id = bt.transaction_id
+        LEFT JOIN books b ON bti.book_id = b.book_id
+        LEFT JOIN equipments e ON bti.equipment_id = e.equipment_id
+        LEFT JOIN students s ON bt.student_id = s.student_id
+        LEFT JOIN faculty f ON bt.faculty_id = f.faculty_id
+        LEFT JOIN staff st ON bt.staff_id = st.staff_id
+        LEFT JOIN users u ON u.user_id = COALESCE(s.user_id, f.user_id, st.user_id)
+        WHERE bti.item_id = ?
+    ");
+    $stmt->execute([$itemId]);
+    $itemInfo = $stmt->fetch(\PDO::FETCH_ASSOC);
+
     $success = $this->returningRepo->markAsReturned((int)$itemId);
 
     if ($success) {
-      $this->auditRepo->log($_SESSION['user_id'], 'RETURN', 'TRANSACTIONS', $itemId, "Item marked as returned.");
+      $itemName = $itemInfo['title'] ?: $itemInfo['equipment_name'] ?: "Unknown Item";
+      $borrower = ($itemInfo['first_name'] . ' ' . $itemInfo['last_name']) ?: "Unknown Borrower";
+      $this->auditRepo->log($_SESSION['user_id'], 'RETURN', 'TRANSACTIONS', $itemId, "Item '$itemName' returned by $borrower.");
       $this->sendJson(['success' => true, 'message' => 'Book returned successfully!']);
     } else {
       $this->sendJson(['success' => false, 'message' => 'Failed to return book. It might be already returned or a database error occurred.']);

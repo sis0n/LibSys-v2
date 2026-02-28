@@ -216,6 +216,7 @@ class AuthController extends Controller
         $changed = $this->AuthRepository->changePassword($userId, $newPassword);
 
         if ($changed) {
+            $this->auditRepo->log($userId, 'CHANGE_PASSWORD', 'AUTH', null, 'User successfully changed their own password.');
             echo json_encode([
                 'status' => 'success',
                 'message' => 'Your password has been successfully updated.'

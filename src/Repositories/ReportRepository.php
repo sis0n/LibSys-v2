@@ -140,6 +140,59 @@ class ReportRepository
         }
     }
 
+    public function getTopBorrowers()
+    {
+        try {
+            $sql = "
+                SELECT 
+                    CONCAT(u.first_name, ' ', u.last_name) AS full_name,
+                    u.username AS identifier,
+                    u.role,
+                    COUNT(bt.transaction_id) AS borrow_count
+                FROM borrow_transactions bt
+                LEFT JOIN students s ON bt.student_id = s.student_id
+                LEFT JOIN faculty f ON bt.faculty_id = f.faculty_id
+                LEFT JOIN staff st ON bt.staff_id = st.staff_id
+                JOIN users u ON u.user_id = COALESCE(s.user_id, f.user_id, st.user_id)
+                WHERE YEAR(bt.borrowed_at) = YEAR(CURDATE())
+                GROUP BY u.user_id, u.first_name, u.last_name, u.username, u.role
+                ORDER BY borrow_count DESC
+                LIMIT 10;
+            ";
+            $stmt = $this->db->prepare($sql);
+            $stmt->execute();
+            return $stmt->fetchAll(PDO::FETCH_ASSOC);
+        } catch (Exception $e) {
+            error_log("ReportRepository error in getTopBorrowers: " . $e->getMessage());
+            return [];
+        }
+    }
+
+    public function getMostBorrowedBooks()
+    {
+        try {
+            $sql = "
+                SELECT 
+                    b.title,
+                    b.author,
+                    b.accession_number,
+                    COUNT(bti.item_id) AS borrow_count
+                FROM borrow_transaction_items bti
+                JOIN books b ON bti.book_id = b.book_id
+                WHERE bti.book_id IS NOT NULL
+                GROUP BY b.book_id, b.title, b.author, b.accession_number
+                ORDER BY borrow_count DESC
+                LIMIT 10;
+            ";
+            $stmt = $this->db->prepare($sql);
+            $stmt->execute();
+            return $stmt->fetchAll(PDO::FETCH_ASSOC);
+        } catch (Exception $e) {
+            error_log("ReportRepository error in getMostBorrowedBooks: " . $e->getMessage());
+            return [];
+        }
+    }
+
     public function getLibraryVisitsByDepartment()
     {
         try {
@@ -198,11 +251,10 @@ class ReportRepository
         }
     }
 
-    // --- New Methods for PDF Generation with Date Range --- 
+    // --- PDF Generation Methods ---
 
     public function getLibraryResourcesData($startDate, $endDate)
     {
-        // Placeholder data as logic is not specified
         return [
             [ 'year' => 2025, 'title' => '-', 'volume' => '-', 'processed' => '-' ],
             [ 'year' => 2026, 'title' => '-', 'volume' => '-', 'processed' => '-' ],

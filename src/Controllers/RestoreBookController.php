@@ -8,10 +8,12 @@ use App\Repositories\RestoreBookRepository;
 class RestoreBookController extends Controller
 {
   protected RestoreBookRepository $restoreBookRepo;
+  protected \App\Repositories\AuditLogRepository $auditRepo;
 
   public function __construct()
   {
     $this->restoreBookRepo = new RestoreBookRepository();
+    $this->auditRepo = new \App\Repositories\AuditLogRepository();
   }
 
   private function validateCsrf(): bool
@@ -62,8 +64,11 @@ class RestoreBookController extends Controller
     }
 
     try {
+      $book = $this->restoreBookRepo->getBookById((int)$bookId);
       $restored = $this->restoreBookRepo->restoreBook((int)$bookId);
       if ($restored) {
+        $bookIdentifier = $book ? "{$book['title']} (Acc: {$book['accession_number']})" : "ID: $bookId";
+        $this->auditRepo->log($librarianId, 'RESTORE', 'BOOKS', $bookId, "Restored book: $bookIdentifier");
         echo json_encode(['success' => true, 'message' => 'Book restored successfully.']);
       } else {
         http_response_code(400);
@@ -110,9 +115,12 @@ class RestoreBookController extends Controller
     }
 
     try {
+      $book = $this->restoreBookRepo->getBookById((int)$bookId);
       $result = $this->restoreBookRepo->archiveBook($bookId, $librarianId);
 
       if ($result['success']) {
+        $bookIdentifier = $book ? "{$book['title']} (Acc: {$book['accession_number']})" : "ID: $bookId";
+        $this->auditRepo->log($librarianId, 'ARCHIVE', 'BOOKS', $bookId, "Permanently archived book: $bookIdentifier");
         echo json_encode(['success' => true, 'message' => 'Book successfully archived.']);
       } else {
         http_response_code(400);

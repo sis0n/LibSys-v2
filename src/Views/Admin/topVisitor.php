@@ -41,7 +41,7 @@
         </div>
     </div>
 
-    <!-- First Row of Tables -->
+   <!-- First Row of Tables -->
     <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mt-6">
 
         <!-- Circulated Books Table -->
@@ -139,6 +139,46 @@
                         </tr>
                     </thead>
                     <tbody id="top-visitors-tbody"></tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Third Row of Tables (New) -->
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6">
+        <!-- Top 10 Borrowers Table -->
+        <div class="bg-white border border-orange-200 rounded-lg shadow-sm p-4">
+            <h3 class="text-lg font-medium mb-4">Top 10 Borrowers (by Year)</h3>
+            <div class="overflow-x-auto rounded-lg border border-orange-200">
+                <table class="w-full text-sm border-collapse">
+                    <thead class="bg-orange-50 text-gray-700 border-b border-orange-100">
+                        <tr>
+                            <th scope="col" class="px-4 py-3 text-left">Rank</th>
+                            <th scope="col" class="px-4 py-3 text-left">Name</th>
+                            <th scope="col" class="px-4 py-3 text-center">Identifier</th>
+                            <th scope="col" class="px-4 py-3 text-center">Role</th>
+                            <th scope="col" class="px-4 py-3 text-center">Borrows</th>
+                        </tr>
+                    </thead>
+                    <tbody id="top-borrowers-tbody"></tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Most Borrowed Books Table -->
+        <div class="bg-white border border-orange-200 rounded-lg shadow-sm p-4">
+            <h3 class="text-lg font-medium mb-4">Most Borrowed Books</h3>
+            <div class="overflow-x-auto rounded-lg border border-orange-200">
+                <table class="w-full text-sm border-collapse">
+                    <thead class="bg-orange-50 text-gray-700 border-b border-orange-100">
+                        <tr>
+                            <th scope="col" class="px-4 py-3 text-left">Rank</th>
+                            <th scope="col" class="px-4 py-3 text-left">Book Title</th>
+                            <th scope="col" class="px-4 py-3 text-center">Accession</th>
+                            <th scope="col" class="px-4 py-3 text-center">Borrows</th>
+                        </tr>
+                    </thead>
+                    <tbody id="most-borrowed-books-tbody"></tbody>
                 </table>
             </div>
         </div>

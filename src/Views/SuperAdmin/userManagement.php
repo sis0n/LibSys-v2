@@ -314,7 +314,8 @@
                             'restore books',
                             'restore equipment',
                             'user management',
-                            'restore users'
+                            'restore users',
+                            'student promotion'
                         ];
 
                         foreach ($modules as $module):
@@ -532,7 +533,8 @@
                         'restore books',
                         'restore equipment',
                         'user management',
-                        'restore users'
+                        'restore users',
+                        'student promotion'
                     ];
 
                     foreach ($modules as $module):

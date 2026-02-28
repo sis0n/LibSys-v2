@@ -432,6 +432,14 @@ $baseUrl = BASE_URL;
                     </a>
                 <?php endif; ?>
 
+                <?php if ($hasPermission('student promotion')): ?>
+                    <a href="<?= $baseUrl ?>/studentPromotion"
+                        class="flex items-center gap-x-3 px-3 py-2 rounded-lg transition <?= $currentPage === 'studentPromotion' ? 'bg-green-600 text-white font-medium' : 'hover:bg-orange-100 text-orange-900' ?>">
+                        <i class="ph ph-student text-2xl"></i>
+                        <span class="text-base">Student Promotion</span>
+                    </a>
+                <?php endif; ?>
+
                 <?php if ($hasPermission('equipment management')): ?>
                     <a href="<?= $baseUrl ?>/equipmentManagement"
                         class="flex items-center gap-x-3 px-3 py-2 rounded-lg transition <?= $currentPage === 'equipmentManagement' ? 'bg-green-600 text-white font-medium' : 'hover:bg-orange-100 text-orange-900' ?>">

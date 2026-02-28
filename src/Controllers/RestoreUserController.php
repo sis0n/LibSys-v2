@@ -8,10 +8,12 @@ use App\Repositories\RestoreUserRepository;
 class RestoreUserController extends Controller
 {
   protected RestoreUserRepository $restoreUserRepo;
+  protected \App\Repositories\AuditLogRepository $auditRepo;
 
   public function __construct()
   {
     $this->restoreUserRepo = new RestoreUserRepository();
+    $this->auditRepo = new \App\Repositories\AuditLogRepository();
   }
 
   private function validateCsrf(string $token): bool
@@ -77,8 +79,12 @@ class RestoreUserController extends Controller
     }
 
     try {
+      $user = $this->restoreUserRepo->getUserById((int)$userId);
       $restored = $this->restoreUserRepo->restoreUser((int)$userId);
       if ($restored) {
+        $adminId = $_SESSION['user_id'] ?? null;
+        $userIdentifier = $user ? "{$user['first_name']} {$user['last_name']} (@{$user['username']})" : "ID: $userId";
+        $this->auditRepo->log($adminId, 'RESTORE', 'USERS', $userId, "Restored user account: $userIdentifier");
         echo json_encode(['success' => true, 'message' => 'User restored successfully.']);
       } else {
         http_response_code(400);
@@ -115,8 +121,11 @@ class RestoreUserController extends Controller
     }
 
     try {
+      $user = $this->restoreUserRepo->getUserById((int)$userId);
       $result = $this->restoreUserRepo->archiveUser($userId, $librarianId);
       if ($result['success']) {
+        $userIdentifier = $user ? "{$user['first_name']} {$user['last_name']} (@{$user['username']})" : "ID: $userId";
+        $this->auditRepo->log($librarianId, 'ARCHIVE', 'USERS', $userId, "Permanently archived user account: $userIdentifier");
         echo json_encode(['success' => true, 'message' => 'User data successfully archived.']);
       } else {
           http_response_code(404);

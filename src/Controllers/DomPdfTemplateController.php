@@ -11,6 +11,13 @@ use Dompdf\Options;
 
 class DomPdfTemplateController extends Controller
 {
+    private $auditRepo;
+
+    public function __construct()
+    {
+        $this->auditRepo = new \App\Repositories\AuditLogRepository();
+    }
+
     public function generatePdfTemplate()
     {
         $this->view("report_pdf_template/pdfTemplate", [
@@ -28,6 +35,10 @@ class DomPdfTemplateController extends Controller
         }
 
         $reportRepo = new ReportRepository();
+
+        if (session_status() === PHP_SESSION_NONE) session_start();
+        $userId = $_SESSION['user_id'] ?? null;
+        $this->auditRepo->log($userId, 'GENERATE_REPORT', 'REPORTS', null, "Generated library report for period: $startDate to $endDate");
 
         $data = [
             'deletedBooks'     => $reportRepo->getDeletedBooksData($startDate, $endDate),

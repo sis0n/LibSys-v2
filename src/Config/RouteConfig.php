@@ -95,6 +95,8 @@ class RouteConfig
     $router->get('api/librarian/reports/circulated-books', 'ReportController@getCirculatedBooksReport', ['reports']);
     $router->get('api/librarian/reports/circulated-equipments', 'ReportController@getCirculatedEquipmentsReport', ['reports']);
     $router->get('api/librarian/reports/top-visitors', 'ReportController@getTopVisitors', ['reports']);
+    $router->get('api/librarian/reports/top-borrowers', 'ReportController@getTopBorrowers', ['reports']);
+    $router->get('api/librarian/reports/most-borrowed-books', 'ReportController@getMostBorrowedBooks', ['reports']);
     $router->get('api/librarian/reports/deleted-books', 'ReportController@getDeletedBooks', ['reports']);
     $router->get('api/librarian/reports/library-visits-department', 'ReportController@getLibraryVisitsByDepartment', ['reports']);
     $router->get('api/librarian/reports/getGraphData', 'ReportController@getReportGraphData', ['reports']);
@@ -139,6 +141,8 @@ class RouteConfig
     $router->get('api/admin/reports/circulated-books', 'ReportController@getCirculatedBooksReport', ['reports']);
     $router->get('api/admin/reports/circulated-equipments', 'ReportController@getCirculatedEquipmentsReport', ['reports']);
     $router->get('api/admin/reports/top-visitors', 'ReportController@getTopVisitors', ['reports']);
+    $router->get('api/admin/reports/top-borrowers', 'ReportController@getTopBorrowers', ['reports']);
+    $router->get('api/admin/reports/most-borrowed-books', 'ReportController@getMostBorrowedBooks', ['reports']);
     $router->get('api/admin/reports/deleted-books', 'ReportController@getDeletedBooks', ['reports']);
     $router->get('api/admin/reports/library-visits-department', 'ReportController@getLibraryVisitsByDepartment', ['reports']);
     $router->get('api/admin/reports/getGraphData', 'ReportController@getReportGraphData', ['reports']);
@@ -170,7 +174,7 @@ class RouteConfig
     $router->post('api/superadmin/userManagement/toggleStatus/{id}', 'UserManagementController@toggleStatus');
     $router->post('api/superadmin/userManagement/allowEdit/{id}', 'UserManagementController@allowEdit', ['superadmin']);
     $router->post('api/superadmin/userManagement/bulkImport', 'UserManagementController@bulkImport');
-    $router->get('api/superadmin/userManagement/getAllCourses', 'DataController@getAllCourses', ['superadmin']);
+    $router->get('api/superadmin/userManagement/getAllCourses', 'DataController@getAllCourses', ['superadmin', 'student promotion']);
     $router->get('api/superadmin/userManagement/getColleges', 'DataController@getColleges', ['superadmin']);
     $router->get('api/superadmin/booksmanagement/fetch', 'BookManagementController@fetch', ['superadmin']);
     $router->get('api/superadmin/booksmanagement/get/{id}', 'BookManagementController@getDetails', ['superadmin']);
@@ -215,6 +219,8 @@ class RouteConfig
     $router->get('api/superadmin/reports/circulated-books', 'ReportController@getCirculatedBooksReport', ['superadmin', 'reports']);
     $router->get('api/superadmin/reports/circulated-equipments', 'ReportController@getCirculatedEquipmentsReport', ['superadmin', 'reports']);
     $router->get('api/superadmin/reports/top-visitors', 'ReportController@getTopVisitors', ['superadmin', 'reports']);
+    $router->get('api/superadmin/reports/top-borrowers', 'ReportController@getTopBorrowers', ['superadmin', 'reports']);
+    $router->get('api/superadmin/reports/most-borrowed-books', 'ReportController@getMostBorrowedBooks', ['superadmin', 'reports']);
     $router->get('api/superadmin/reports/deleted-books', 'ReportController@getDeletedBooks', ['superadmin', 'reports']);
     $router->get('api/superadmin/reports/library-visits-department', 'ReportController@getLibraryVisitsByDepartment', ['superadmin', 'reports']);
     $router->get('api/superadmin/myProfile/get', 'SuperAdminProfileController@getProfile', ['superadmin']);
@@ -226,11 +232,11 @@ class RouteConfig
     $router->get('api/superadmin/auditLogs/fetch', 'AuditLogController@fetch', ['superadmin']);
     $router->get('auditLogs', 'AuditLogController@index', ['superadmin']);
 
-    $router->get('api/superadmin/studentPromotion/fetch', 'StudentPromotionController@fetch', ['superadmin']);
-    $router->post('api/superadmin/studentPromotion/promote', 'StudentPromotionController@promote', ['superadmin']);
-    $router->post('api/superadmin/studentPromotion/deactivate', 'StudentPromotionController@deactivate', ['superadmin']);
-    $router->post('api/superadmin/studentPromotion/activate', 'StudentPromotionController@activate', ['superadmin']);
-    $router->get('studentPromotion', 'StudentPromotionController@index', ['superadmin']);
+    $router->get('api/superadmin/studentPromotion/fetch', 'StudentPromotionController@fetch', ['superadmin', 'student promotion']);
+    $router->post('api/superadmin/studentPromotion/promote', 'StudentPromotionController@promote', ['superadmin', 'student promotion']);
+    $router->post('api/superadmin/studentPromotion/deactivate', 'StudentPromotionController@deactivate', ['superadmin', 'student promotion']);
+    $router->post('api/superadmin/studentPromotion/activate', 'StudentPromotionController@activate', ['superadmin', 'student promotion']);
+    $router->get('studentPromotion', 'StudentPromotionController@index', ['superadmin', 'student promotion']);
 
     $router->post('generate-report', 'DomPdfTemplateController@generateLibraryReport', ['superadmin']);
 
