@@ -212,11 +212,11 @@ class RouteConfig
     $router->get('api/superadmin/borrowingForm/getCollaterals', 'ManualBorrowingController@getCollaterals', ['superadmin']);
     $router->post('api/superadmin/borrowingForm/checkUser', 'ManualBorrowingController@checkUser');
     $router->post('api/superadmin/borrowingForm/create', 'ManualBorrowingController@create');
-    $router->get('api/superadmin/reports/circulated-books', 'ReportController@getCirculatedBooksReport', ['superadmin']);
-    $router->get('api/superadmin/reports/circulated-equipments', 'ReportController@getCirculatedEquipmentsReport', ['superadmin']);
-    $router->get('api/superadmin/reports/top-visitors', 'ReportController@getTopVisitors', ['reports']);
-    $router->get('api/superadmin/reports/deleted-books', 'ReportController@getDeletedBooks', ['reports']);
-    $router->get('api/superadmin/reports/library-visits-department', 'ReportController@getLibraryVisitsByDepartment', ['superadmin']);
+    $router->get('api/superadmin/reports/circulated-books', 'ReportController@getCirculatedBooksReport', ['superadmin', 'reports']);
+    $router->get('api/superadmin/reports/circulated-equipments', 'ReportController@getCirculatedEquipmentsReport', ['superadmin', 'reports']);
+    $router->get('api/superadmin/reports/top-visitors', 'ReportController@getTopVisitors', ['superadmin', 'reports']);
+    $router->get('api/superadmin/reports/deleted-books', 'ReportController@getDeletedBooks', ['superadmin', 'reports']);
+    $router->get('api/superadmin/reports/library-visits-department', 'ReportController@getLibraryVisitsByDepartment', ['superadmin', 'reports']);
     $router->get('api/superadmin/myProfile/get', 'SuperAdminProfileController@getProfile', ['superadmin']);
     $router->post('api/superadmin/myProfile/update', 'SuperAdminProfileController@updateProfile', ['superadmin']);
     $router->post('api/superadmin/returning/sendOverdueEmail', 'ReturningController@sendOverdueEmail', ['superadmin']);
