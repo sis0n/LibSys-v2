@@ -206,6 +206,9 @@ class RouteConfig
     $router->get('api/superadmin/backup/database/full', 'BackupController@initiateBackup', ['superadmin']);
     $router->get('api/superadmin/backup/secure_download/{filename}', 'BackupController@downloadBackup', ['superadmin']);
     $router->get('api/superadmin/backup/logs', 'BackupController@listBackupLogs', ['superadmin']);
+    $router->post('api/superadmin/backup/restore/{filename}', 'BackupController@restoreBackup', ['superadmin']);
+    $router->post('api/superadmin/backup/delete/{filename}', 'BackupController@deleteBackup', ['superadmin']);
+    $router->post('api/superadmin/backup/upload_restore', 'BackupController@uploadAndRestore', ['superadmin']);
     $router->get('api/superadmin/dashboard/stats', 'App\Controllers\DashboardController@getStats', ['superadmin']);
     $router->get('api/superadmin/dashboard/top-visitors', 'App\Controllers\DashboardController@getTopVisitors', ['superadmin']);
     $router->get('api/superadmin/dashboard/weekly-activity', 'App\Controllers\DashboardController@getWeeklyActivity', ['superadmin']);
