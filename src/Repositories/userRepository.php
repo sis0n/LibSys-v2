@@ -23,7 +23,6 @@ class UserRepository
   public function findByIdentifier(string $identifier)
   {
     try {
-      // ----------- Try student first -----------
       $stmt = $this->db->prepare("
             SELECT 
                 u.user_id, 
@@ -55,7 +54,6 @@ class UserRepository
         return $student;
       }
 
-      // ----------- Try by username fallback -----------
       $stmt = $this->db->prepare("
             SELECT 
                 u.user_id, 
@@ -87,7 +85,6 @@ class UserRepository
         return $user;
       }
 
-      // ----------- Try faculty table if no student found -----------
       $stmt = $this->db->prepare("
             SELECT 
                 u.user_id,
@@ -113,7 +110,7 @@ class UserRepository
       $faculty = $stmt->fetch(PDO::FETCH_ASSOC);
 
       if ($faculty) {
-        $faculty['role'] = 'faculty'; // ensure role is set
+        $faculty['role'] = 'faculty';
         return $faculty;
       }
 
@@ -139,7 +136,7 @@ class UserRepository
   {
     if (empty($usersBatch)) return [];
 
-    $columns = ['username', 'password', 'first_name', 'middle_name', 'last_name', 'role', 'is_active', 'created_at'];
+    $columns = ['username', 'password', 'first_name', 'middle_name', 'last_name', 'email', 'role', 'is_active', 'created_at'];
     $colString = implode(',', $columns);
 
     $placeholders = [];
@@ -157,10 +154,7 @@ class UserRepository
     $stmt = $this->db->prepare($sql);
     $stmt->execute($flatValues);
 
-    $firstId = (int)$this->db->lastInsertId();
-    $count = count($usersBatch);
-
-    return range($firstId, $firstId + $count - 1);
+    return true;
   }
 
   public function insertUser(array $data): int
@@ -544,10 +538,6 @@ class UserRepository
     }
   }
 
-  /**
-   * Finds a user by their email address.
-   * Returns user data (joined with student/faculty if possible) if found, otherwise null.
-   */
   public function findByEmail(string $email)
   {
     try {
@@ -589,7 +579,6 @@ class UserRepository
     }
   }
 
-  // Pagination Start
   public function getPaginatedUsers(int $limit, int $offset, string $search, string $role, string $status, ?int $excludeUserId = null): array
   {
     $baseQuery = "
@@ -680,7 +669,6 @@ class UserRepository
       return 0;
     }
   }
-  // Pagination End
 
   public function usernameExists($username)
   {
@@ -688,5 +676,11 @@ class UserRepository
     $stmt = $this->db->prepare($sql);
     $stmt->execute([':username' => $username]);
     return $stmt->fetchColumn() > 0;
+  }
+
+  public function getAllUsernamesMap(): array
+  {
+    $stmt = $this->db->query("SELECT username FROM users");
+    return $stmt->fetchAll(PDO::FETCH_COLUMN);
   }
 }

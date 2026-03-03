@@ -35,7 +35,6 @@ class UserManagementController extends Controller
     ]);
   }
 
-  // Pagination Start
   public function fetchPaginatedUsers()
   {
     header('Content-Type: application/json');
@@ -57,7 +56,6 @@ class UserManagementController extends Controller
     }
     exit;
   }
-  // Pagination End
 
   public function getUserById($id)
   {
@@ -152,7 +150,6 @@ class UserManagementController extends Controller
           $this->auditRepo->log($_SESSION['user_id'], 'CREATE', 'USERS', $username, "Added new user: $first_name $last_name as " . ucfirst($role));
       }
 
-      // roles based
       switch ($role) {
         case 'student':
           $studentNumber = $username;
@@ -281,7 +278,6 @@ class UserManagementController extends Controller
     }
   }
 
-  // Updated
   public function deleteMultipleUsers()
   {
     header('Content-Type: application/json');
@@ -410,7 +406,6 @@ class UserManagementController extends Controller
 
     echo json_encode($response);
   }
-  // end
 
   public function toggleStatus($id)
   {
@@ -455,48 +450,32 @@ class UserManagementController extends Controller
     }
 
     try {
-      // Itabi ang module data
       $modulesPayload = $data['modules'] ?? null;
       $modulesKeyWasPresent = array_key_exists('modules', $data);
-      unset($data['modules']); // Alisin sa $data para 'di ma-save sa 'users' table
+      unset($data['modules']);
 
-      // Kunin ang role ng user mula sa database (dahil hindi ito nagbabago)
       $currentUser = $this->userRepo->getUserById((int)$id);
       $currentRole = strtolower($currentUser['role'] ?? '');
 
-      // Siguraduhin na hindi aksidenteng mapapalitan ang role
       unset($data['role']);
       unset($data['user_id']);
 
-      // Handle password update kung meron
       if (isset($data['password']) && !empty($data['password'])) {
         $data['password'] = password_hash($data['password'], PASSWORD_DEFAULT);
       } else {
-        unset($data['password']); // 'Wag i-update kung empty
+        unset($data['password']);
       }
 
-      // I-update ang user details (name, email, password, etc.)
       $userUpdated = $this->userRepo->updateUser((int)$id, $data);
-
-      // --- LOGIC PARA LANG SA MODULES ---
       $modulesUpdated = false;
 
-      // Titingnan lang natin kung ang role NIYA TALAGA ay admin o librarian
       if ($currentRole === 'admin' || $currentRole === 'librarian') {
-
-        // At titingnan kung sinadya bang ipadala ang 'modules' key
         if ($modulesKeyWasPresent) {
-
-          // Kung 'null' (uncheck all) or 'di array, gawing '[]'
           $modulesToAssign = is_array($modulesPayload) ? $modulesPayload : [];
-
-          // I-sync ang modules (I-assume na ang assignModules ay nagde-DELETE muna bago mag-INSERT)
           $this->userPermissionRepo->assignModules((int)$id, $modulesToAssign);
           $modulesUpdated = true;
         }
       }
-
-      // --- END NG LOGIC ---
 
       if ($userUpdated || $modulesUpdated) {
         $details = "Updated details/permissions for {$currentUser['first_name']} {$currentUser['last_name']}";
@@ -551,7 +530,16 @@ class UserManagementController extends Controller
     $file = $_FILES['csv_file']['tmp_name'];
     $userRepo = new \App\Repositories\UserRepository();
     $studentRepo = new \App\Repositories\StudentRepository();
+    $courseRepo = new \App\Repositories\CollegeCourseRepository();
     $db = $userRepo->getDbConnection();
+
+    $allCourses = $courseRepo->getAllCourses();
+    $courseMap = [];
+    foreach ($allCourses as $c) {
+      $courseMap[strtoupper(trim($c['course_code']))] = $c['course_id'];
+    }
+
+    $existingUsernames = array_flip($userRepo->getAllUsernamesMap());
 
     $imported = 0;
     $errors = [];
@@ -563,7 +551,6 @@ class UserManagementController extends Controller
     $timestamp = date('Y-m-d H:i:s');
 
     if (($handle = fopen($file, 'r')) !== false) {
-      // 1. Kunin ang header
       $header = array_map('strtolower', array_map('trim', fgetcsv($handle)));
 
       $rowNumber = 2;
@@ -573,21 +560,26 @@ class UserManagementController extends Controller
         while (($row = fgetcsv($handle)) !== false) {
           $data = array_combine($header, array_pad($row, count($header), ''));
 
-          $studentId = trim($data['student_number'] ?? '');
-          $firstName = trim($data['first_name'] ?? '');
-          $lastName  = trim($data['last_name'] ?? '');
+          $firstName  = trim($data['first_name'] ?? '');
+          $lastName   = trim($data['last_name'] ?? '');
+          $studentId  = trim($data['student_number'] ?? '');
+          $courseCode = strtoupper(trim($data['course_code'] ?? ''));
+          $contact    = trim($data['contact'] ?? 'N/A');
+          $email      = trim($data['email'] ?? '');
 
-          if ($studentId === '' || $firstName === '' || $lastName === '') {
-            $errors[] = "Row $rowNumber: Skip - Missing required fields.";
+          if ($studentId === '' || $firstName === '') {
+            $errors[] = "Row $rowNumber: Skip - Missing First Name or Student Number.";
             $rowNumber++;
             continue;
           }
 
-          if ($userRepo->findByStudentNumber($studentId)) {
+          if (isset($existingUsernames[$studentId])) {
             $errors[] = "Row $rowNumber: Skip - Student ID ($studentId) already exists.";
             $rowNumber++;
             continue;
           }
+
+          $courseId = $courseMap[$courseCode] ?? null;
 
           $usersBuffer[] = [
             'username'    => $studentId,
@@ -595,16 +587,19 @@ class UserManagementController extends Controller
             'first_name'  => $firstName,
             'middle_name' => null,
             'last_name'   => $lastName,
-            'role'        => 'student',
+            'email'       => !empty($email) ? $email : null,
+            'role'        => 'Student',
             'is_active'   => 1,
             'created_at'  => $timestamp
           ];
 
           $studentDataBuffer[] = [
             'student_number' => $studentId,
-            'course_id'      => null,
+            'course_id'      => $courseId,
             'year_level'     => 1,
-            'status'         => 'enrolled'
+            'status'         => 'enrolled',
+            'contact'        => $contact,
+            'section'        => 'N/A'
           ];
 
           if (count($usersBuffer) >= $batchSize) {
@@ -623,9 +618,7 @@ class UserManagementController extends Controller
 
         $db->commit();
       } catch (\Exception $e) {
-        if ($db->inTransaction()) {
-          $db->rollBack();
-        }
+        if ($db->inTransaction()) $db->rollBack();
         echo json_encode(['success' => false, 'message' => "Database Error: " . $e->getMessage()]);
         exit;
       }
@@ -636,18 +629,29 @@ class UserManagementController extends Controller
 
   private function processBatch($userRepo, $studentRepo, $users, $students)
   {
-    foreach ($users as $index => $userData) {
-      try {
-        $userId = $userRepo->insertUser($userData);
+    try {
+      $userRepo->bulkInsertUsers($users);
 
-        if ($userId) {
-          $studentRow = $students[$index];
-          $studentRow['user_id'] = $userId;
-          $studentRepo->insertStudent($studentRow);
+      $usernames = array_column($users, 'username');
+      $placeholders = implode(',', array_fill(0, count($usernames), '?'));
+      $db = $userRepo->getDbConnection();
+      $stmt = $db->prepare("SELECT username, user_id FROM users WHERE username IN ($placeholders)");
+      $stmt->execute($usernames);
+      $userMap = $stmt->fetchAll(\PDO::FETCH_KEY_PAIR);
+
+      $finalStudentsBatch = [];
+      foreach ($students as $s) {
+        if (isset($userMap[$s['student_number']])) {
+          $s['user_id'] = $userMap[$s['student_number']];
+          $finalStudentsBatch[] = $s;
         }
-      } catch (\Exception $e) {
-        continue;
       }
+
+      if (!empty($finalStudentsBatch)) {
+        $studentRepo->bulkInsertStudentDetails($finalStudentsBatch);
+      }
+    } catch (\Exception $e) {
+      error_log("Bulk Process Error: " . $e->getMessage());
     }
   }
 }
