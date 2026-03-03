@@ -79,6 +79,11 @@ class ScannerController extends Controller
                 "status" => "success",
                 "full_name" => $fullName,
                 "student_number" => $user['student_number'],
+                "profile_picture" => $user['profile_picture'],
+                "course" => $user['course_title'] ?? $user['course_code'] ?? 'N/A',
+                "course_code" => $user['course_code'] ?? 'N/A',
+                "year_level" => $user['year_level'],
+                "section" => $user['section'] ?? 'N/A',
                 "time" => $now->format('g:i A')
             ]);
         } catch (\Exception $e) {
@@ -145,6 +150,11 @@ class ScannerController extends Controller
                 "status" => "success",
                 "full_name" => $fullName,
                 "student_number" => $user['student_number'],
+                "profile_picture" => $user['profile_picture'],
+                "course" => $user['course_title'] ?? $user['course_code'] ?? 'N/A',
+                "course_code" => $user['course_code'] ?? 'N/A',
+                "year_level" => $user['year_level'],
+                "section" => $user['section'] ?? 'N/A',
                 "time" => $now->format('g:i A')
             ]);
         } catch (\Exception $e) {

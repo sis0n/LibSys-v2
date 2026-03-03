@@ -13,6 +13,10 @@
         href="https://cdn.jsdelivr.net/npm/@phosphor-icons/web@2.1.2/src/regular/style.css" />
     <!-- SWEETALERT2 -->
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script>
+        const BASE_URL_JS = '<?= rtrim(BASE_URL, '/') ?>';
+        window.STORAGE_URL = '<?= defined('STORAGE_URL') ? STORAGE_URL : '' ?>';
+    </script>
 </head>
 
 <body class="bg-orange-50 font-sans flex flex-col min-h-screen">
@@ -217,6 +221,12 @@
                 let timerInterval;
 
                 const showAlert = (isSuccess) => {
+                    let profileImg = `${BASE_URL_JS}/assets/library-icons/android-chrome-192x192.png`;
+                    if (data.profile_picture) {
+                        const cleanPath = data.profile_picture.replace(/^\//, "");
+                        profileImg = window.STORAGE_URL + '/' + cleanPath;
+                    }
+
                     Swal.fire({
                         position: "center",
                         showConfirmButton: false,
@@ -244,13 +254,13 @@
                         },
                         html: isSuccess ? `
                         <div class="w-[450px] bg-orange-50 border-2 border-orange-300 rounded-2xl p-8 shadow-lg text-center">
-                            <div class="flex items-center justify-center w-16 h-16 rounded-full bg-orange-100 mx-auto mb-4">
-                                <i class="ph ph-user-check text-orange-600 text-3xl"></i>
+                            <div class="w-32 h-32 rounded-full border-4 border-white shadow-md overflow-hidden mx-auto mb-4 bg-gray-50">
+                                <img src="${profileImg}" alt="Student" class="w-full h-full object-cover">
                             </div>
-                            <h3 class="text-2xl font-bold text-orange-700">Attendance Recorded</h3>
+                            <h3 class="text-2xl font-bold text-orange-700">${data.full_name}</h3>
                             <div class="text-base text-orange-700 mt-3 space-y-1">
-                                <p><strong>Name:</strong> ${data.full_name}</p>
                                 <p><strong>Student Number:</strong> ${data.student_number}</p>
+                                <p><strong>Course & Year:</strong> ${data.course_code} ${data.year_level}-${data.section}</p>
                                 <p><strong>Time:</strong> ${data.time}</p>
                             </div>
                             <div class="w-full bg-orange-100 h-2 rounded mt-4 overflow-hidden">
@@ -312,6 +322,12 @@
                 let timerInterval;
 
                 const showAlert = (isSuccess) => {
+                    let profileImg = `${BASE_URL_JS}/assets/library-icons/android-chrome-192x192.png`;
+                    if (data.profile_picture) {
+                        const cleanPath = data.profile_picture.replace(/^\//, "");
+                        profileImg = window.STORAGE_URL + '/' + cleanPath;
+                    }
+
                     Swal.fire({
                         position: "center",
                         showConfirmButton: false,
@@ -337,13 +353,13 @@
                         },
                         html: isSuccess ? `
                         <div class="w-[450px] bg-orange-50 border-2 border-orange-300 rounded-2xl p-8 shadow-lg text-center">
-                            <div class="flex items-center justify-center w-16 h-16 rounded-full bg-orange-100 mx-auto mb-4">
-                                <i class="ph ph-user-check text-orange-600 text-3xl"></i>
+                            <div class="w-32 h-32 rounded-full border-4 border-white shadow-md overflow-hidden mx-auto mb-4 bg-gray-50">
+                                <img src="${profileImg}" alt="Student" class="w-full h-full object-cover">
                             </div>
-                            <h3 class="text-2xl font-bold text-orange-700">Attendance Recorded</h3>
+                            <h3 class="text-2xl font-bold text-orange-700">${data.full_name}</h3>
                             <div class="text-base text-orange-700 mt-3 space-y-1">
-                                <p><strong>Name:</strong> ${data.full_name}</p>
                                 <p><strong>Student Number:</strong> ${data.student_number}</p>
+                                <p><strong>Course & Year:</strong> ${data.course_code} ${data.year_level}-${data.section}</p>
                                 <p><strong>Time:</strong> ${data.time}</p>
                             </div>
                             <div class="w-full bg-orange-100 h-2 rounded mt-4 overflow-hidden">
