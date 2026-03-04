@@ -237,10 +237,10 @@ class ReturningRepository
             ]
           ];
         }
-        return ['status' => 'available', 'details' => ['item_type' => $itemType, 'title' => ($itemType === 'Book' ? $itemBasicDetails['title'] : $itemBasicDetails['equipment_name'])]];
+        return ['status' => 'available', 'details' => array_merge(['item_type' => $itemType], $itemBasicDetails)];
       }
 
-      return ['status' => 'available', 'details' => ['item_type' => $itemType, 'title' => ($itemType === 'Book' ? $itemBasicDetails['title'] : $itemBasicDetails['equipment_name'])]];
+      return ['status' => 'available', 'details' => array_merge(['item_type' => $itemType], $itemBasicDetails)];
     } catch (PDOException $e) {
       error_log('[ReturningRepository::findItemByIdentifier] ' . $e->getMessage());
       return ['status' => 'error', 'message' => 'Database error: ' . $e->getMessage()];

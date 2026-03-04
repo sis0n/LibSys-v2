@@ -4,7 +4,6 @@
         <p class="text-gray-500 mt-4">Scan item barcode or enter identifier to process returns</p>
     </div>
 
-    <!-- Main Scanning Card -->
     <div class="bg-white rounded-lg p-6 shadow-sm max-w-7xl mx-auto border border-orange-200">
         <div class="flex items-center gap-3">
             <i class="ph ph-barcode text-2xl text-gray-700"></i>
@@ -51,7 +50,6 @@
         </p>
     </div>
 
-    <!-- Recent Returns Table (Management Style) -->
     <div class="bg-white border border-orange-200 rounded-xl shadow-sm p-6 mt-8 max-w-7xl mx-auto">
         <div class="flex items-center justify-between mb-4">
             <div>
@@ -89,88 +87,131 @@
     </div>
 </div>
 
-<!-- Return Modal -->
 <div id="return-modal" class="fixed inset-0 backdrop-blur-sm bg-black/30 flex items-center justify-center z-50 hidden px-4">
-    <div class="bg-white rounded-xl shadow-xl w-full max-w-lg p-6 border border-orange-200">
-        <div class="flex justify-between items-center mb-4 border-b border-orange-100 pb-4">
+    <div class="bg-white rounded-2xl shadow-xl w-full max-w-lg p-6 mx-4 border-2 border-orange-500">
+        <div class="flex justify-between items-center mb-4">
             <div>
-                <h2 class="text-lg font-semibold text-gray-900">Item Scanned Successfully</h2>
-                <p class="text-sm text-gray-500">Verify details before processing return.</p>
+                <h3 class="text-xl font-bold text-gray-800" id="return-modal-title">Item Scanned Successfully</h3>
+                <p class="text-gray-500 text-sm" id="return-modal-subtitle">Item information retrieved from the system</p>
             </div>
-            <button id="modal-close-button" class="text-gray-500 hover:text-red-600 transition">
+            <button id="modal-close-button" class="text-gray-400 hover:text-gray-600 transition">
                 <i class="ph ph-x text-2xl"></i>
             </button>
         </div>
 
-        <div class="space-y-4 max-h-[70vh] overflow-y-auto pr-2">
-            <div class="bg-orange-50/50 border border-orange-100 rounded-lg p-4">
-                <div class="flex justify-between items-start mb-2">
-                    <div>
-                        <p class="text-[10px] font-bold text-orange-500 uppercase tracking-widest mb-1">Item Title</p>
-                        <h4 id="modal-book-title" class="font-bold text-gray-800 text-lg leading-tight"></h4>
-                        <p id="modal-book-author" class="text-sm text-gray-600 mt-0.5 book-only-field italic"></p>
-                    </div>
-                    <span id="modal-book-status" class="bg-orange-200 text-orange-800 text-[10px] font-black px-2 py-1 rounded uppercase">BORROWED</span>
+        <div class="bg-stone-50 border border-stone-200 rounded-lg p-4 mb-4">
+            <div class="flex justify-between items-start mb-2">
+                <div>
+                    <p class="text-xs text-gray-500" id="modal-item-type-label">Item Title</p>
+                    <h4 id="modal-book-title" class="font-bold text-gray-800 text-lg leading-tight"></h4>
+                    <p id="modal-book-author" class="text-sm text-gray-600 mt-0.5 book-only-field italic"></p>
                 </div>
-                <div class="grid grid-cols-2 gap-4 mt-4 pt-4 border-t border-orange-100/50">
-                    <div>
-                        <p class="text-[10px] text-gray-400 font-bold uppercase">Accession No.</p>
-                        <p id="modal-book-accessionnumber" class="text-sm font-bold text-gray-700 font-mono"></p>
-                    </div>
-                    <div class="book-only-field">
-                        <p class="text-[10px] text-gray-400 font-bold uppercase">Call Number</p>
-                        <p id="modal-book-callnumber" class="text-sm font-bold text-gray-700 font-mono"></p>
-                    </div>
-                </div>
+                <span id="modal-book-status" class="bg-orange-200 text-orange-800 text-xs font-semibold px-3 py-1 rounded-full uppercase">BORROWED</span>
             </div>
-
-            <div class="bg-white border border-gray-200 rounded-lg p-4">
-                <h5 class="text-xs font-bold text-gray-400 uppercase tracking-widest mb-4">Borrower Information</h5>
-                <div class="grid grid-cols-2 gap-y-4">
-                    <div>
-                        <p class="text-[10px] text-gray-400 font-bold uppercase">Name</p>
-                        <p id="modal-borrower-name" class="text-sm font-bold text-gray-800"></p>
-                    </div>
-                    <div>
-                        <p id="modal-student-id-label" class="text-[10px] text-gray-400 font-bold uppercase">ID Number</p>
-                        <p id="modal-student-id" class="text-sm font-bold text-gray-800 font-mono"></p>
-                    </div>
-                    <div class="col-span-2">
-                        <p id="modal-borrower-course-label" class="text-[10px] text-gray-400 font-bold uppercase">Course / Department</p>
-                        <p id="modal-borrower-course" class="text-sm font-medium text-gray-700"></p>
-                    </div>
-                    <div>
-                        <p class="text-[10px] text-red-400 font-bold uppercase">Due Date</p>
-                        <p id="modal-due-date" class="text-sm font-black text-red-600"></p>
-                    </div>
+            <div class="grid grid-cols-3 gap-4 mt-3">
+                <div class="book-only-field">
+                    <p class="text-[10px] text-gray-500 font-bold uppercase">ISBN</p>
+                    <p id="modal-book-isbn" class="text-sm font-medium text-gray-700 font-mono"></p>
+                </div>
+                <div>
+                    <p class="text-[10px] text-gray-500 font-bold uppercase" id="modal-item-identifier-label">Accession No.</p>
+                    <p id="modal-book-accessionnumber" class="text-sm font-medium text-gray-700 font-mono"></p>
+                </div>
+                <div class="book-only-field">
+                    <p class="text-[10px] text-gray-500 font-bold uppercase">Call Number</p>
+                    <p id="modal-book-callnumber" class="text-sm font-medium text-gray-700 font-mono"></p>
+                </div>
+                <div id="modal-equipment-asset-tag-container" style="display: none;">
+                    <p class="text-[10px] text-gray-500 font-bold uppercase">Asset Tag</p>
+                    <p id="modal-equipment-asset-tag" class="text-sm font-medium text-gray-700 font-mono"></p>
                 </div>
             </div>
         </div>
 
-        <div class="flex justify-end gap-3 mt-6 pt-6 border-t border-gray-100">
-            <button id="modal-cancel-button" class="px-6 py-2.5 border border-orange-200 text-gray-800 font-medium rounded-lg hover:bg-orange-50 transition">Cancel</button>
-            <button id="modal-return-button" class="flex-1 bg-orange-600 text-white font-medium px-6 py-2.5 rounded-lg hover:bg-orange-700 transition shadow-lg shadow-orange-500/20 flex items-center justify-center gap-2">
-                <i class="ph ph-check-circle text-lg"></i>
-                Mark as Returned
-            </button>
+        <div class="bg-amber-50 border border-amber-200 rounded-lg p-4 mb-6">
+            <div class="flex items-center gap-2 mb-3 text-orange-800 font-semibold">
+                <i class="ph ph-user"></i>
+                <h5>Borrower Information</h5>
+            </div>
+            <div class="grid grid-cols-2 gap-x-6 gap-y-3">
+                <div><p class="text-[10px] text-gray-500 uppercase font-bold">Name</p><p id="modal-borrower-name" class="text-sm font-medium text-gray-700"></p></div>
+                <div><p id="modal-student-id-label" class="text-[10px] text-gray-500 uppercase font-bold">ID Number</p><p id="modal-student-id" class="text-sm font-medium text-gray-700 font-mono"></p></div>
+                <div class="col-span-2"><p id="modal-borrower-course-label" class="text-[10px] text-gray-500 uppercase font-bold">Course / Department</p><p id="modal-borrower-course" class="text-sm font-medium text-gray-700"></p></div>
+                <div><p id="modal-year-section-label" class="text-[10px] text-gray-500 uppercase font-bold">Year & Section</p><p id="modal-borrower-year-section" class="text-sm font-medium text-gray-700"></p></div>
+                <div><p class="text-[10px] text-red-500 uppercase font-bold">Due Date</p><p id="modal-due-date" class="text-sm font-bold text-red-600"></p></div>
+                <p id="modal-borrower-email" class="hidden"></p>
+                <p id="modal-borrower-contact" class="hidden"></p>
+                <p id="modal-borrow-date" class="hidden"></p>
+            </div>
+        </div>
+
+        <div class="flex justify-end items-center gap-3 mt-6 pt-4 border-t border-gray-100">
+            <button id="modal-cancel-button" class="text-xs px-6 py-2.5 border border-gray-300 rounded-lg text-gray-700 font-semibold hover:bg-gray-100 transition">Cancel</button>
+            <button id="modal-extend-button" class="text-xs px-6 py-2.5 border border-orange-200 rounded-lg text-orange-700 font-semibold hover:bg-orange-50 flex items-center gap-2"><i class="ph ph-calendar"></i> Extend Due Date</button>
+            <button id="modal-return-button" class="text-xs px-6 py-2.5 bg-orange-500 text-white rounded-lg font-semibold hover:bg-orange-600 flex items-center gap-2 shadow-lg shadow-orange-500/20 transition active:scale-95"><i class="ph ph-check-circle"></i> Mark as Returned</button>
         </div>
     </div>
 </div>
 
-<!-- Available Book Modal -->
 <div id="available-book-modal" class="fixed inset-0 backdrop-blur-sm bg-black/30 flex items-center justify-center z-50 hidden px-4">
-    <div class="bg-white rounded-xl shadow-xl w-full max-w-lg p-6 border-2 border-green-500">
+    <div class="bg-white rounded-2xl shadow-xl w-full max-w-lg p-6 mx-4 border-2 border-green-500">
         <div class="flex justify-between items-center mb-4">
-            <h3 class="text-xl font-bold text-gray-800">Book Information</h3>
-            <button id="available-modal-close-button" class="text-gray-400 hover:text-gray-600"><i class="ph ph-x text-2xl"></i></button>
+            <div>
+                <h3 class="text-xl font-bold text-gray-800">Item Scanned Successfully</h3>
+                <p class="text-gray-500 text-sm">Item information retrieved from the system</p>
+            </div>
+            <button id="available-modal-close-button" class="text-gray-400 hover:text-gray-600 transition">
+                <i class="ph ph-x text-2xl"></i>
+            </button>
         </div>
+
+        <div class="bg-stone-50 border border-stone-200 rounded-lg p-4 mb-4">
+            <div class="flex justify-between items-start mb-2">
+                <div>
+                    <p class="text-xs text-gray-500" id="available-modal-item-type-label">Item Title</p>
+                    <h4 id="available-modal-title" class="font-bold text-gray-800 text-lg leading-tight"></h4>
+                    <p id="available-modal-author" class="text-sm text-gray-600 mt-0.5 book-only-field italic"></p>
+                </div>
+                <span id="available-modal-status" class="bg-green-200 text-green-800 text-xs font-semibold px-3 py-1 rounded-full uppercase tracking-widest">AVAILABLE</span>
+            </div>
+            <div class="grid grid-cols-3 gap-4 mt-3">
+                <div class="book-only-field">
+                    <p class="text-[10px] text-gray-500 font-bold uppercase">ISBN</p>
+                    <p id="available-modal-isbn" class="text-sm font-medium text-gray-700 font-mono"></p>
+                </div>
+                <div>
+                    <p class="text-[10px] text-gray-500 font-bold uppercase" id="available-modal-identifier-label">Accession No.</p>
+                    <p id="available-modal-accession" class="text-sm font-medium text-gray-700 font-mono"></p>
+                </div>
+                <div class="book-only-field">
+                    <p class="text-[10px] text-gray-500 font-bold uppercase">Call Number</p>
+                    <p id="available-modal-call-number" class="text-sm font-medium text-gray-700 font-mono"></p>
+                </div>
+                <div id="available-modal-asset-tag-container" style="display: none;">
+                    <p class="text-[10px] text-gray-500 font-bold uppercase">Asset Tag</p>
+                    <p id="available-modal-asset-tag" class="text-sm font-medium text-gray-700 font-mono"></p>
+                </div>
+            </div>
+        </div>
+
         <div class="bg-green-50 border border-green-200 rounded-lg p-4 mb-6">
-            <h4 id="available-modal-title" class="font-bold text-gray-800 text-lg"></h4>
-            <p id="available-modal-author" class="text-sm text-gray-600 italic"></p>
-            <span class="mt-2 inline-block bg-green-200 text-green-800 text-[10px] font-black px-2 py-0.5 rounded tracking-widest uppercase">AVAILABLE</span>
+            <div class="flex items-center gap-2 mb-3 text-green-800 font-semibold">
+                <i class="ph ph-info"></i>
+                <h5>Extended Information</h5>
+            </div>
+            <div class="grid grid-cols-2 gap-x-6 gap-y-3">
+                <div class="book-only-field"><p class="text-[10px] text-gray-500 uppercase font-bold">Publisher</p><p id="available-modal-publisher" class="text-sm font-medium text-gray-700"></p></div>
+                <div class="book-only-field"><p class="text-[10px] text-gray-500 uppercase font-bold">Year</p><p id="available-modal-year" class="text-sm font-medium text-gray-700"></p></div>
+                <div class="book-only-field"><p class="text-[10px] text-gray-500 uppercase font-bold">Edition</p><p id="available-modal-edition" class="text-sm font-medium text-gray-700"></p></div>
+                <div><p class="text-[10px] text-gray-500 uppercase font-bold">Subject</p><p id="available-modal-subject" class="text-sm font-medium text-gray-700"></p></div>
+                <div class="col-span-2"><p class="text-[10px] text-gray-500 uppercase font-bold">Description</p><p id="available-modal-description" class="text-xs text-gray-600 italic leading-relaxed"></p></div>
+                <p id="available-modal-place" class="hidden"></p>
+                <p id="available-modal-supplementary" class="hidden"></p>
+            </div>
         </div>
-        <div class="flex justify-end">
-            <button id="available-modal-close-action" class="px-8 py-2.5 bg-gray-100 text-gray-700 rounded-lg font-semibold hover:bg-gray-200 transition">Close</button>
+
+        <div class="flex justify-end items-center mt-6 pt-4 border-t border-gray-100">
+            <button id="available-modal-close-action" class="w-full sm:w-auto px-10 py-2.5 bg-gray-100 text-gray-700 rounded-lg font-semibold hover:bg-gray-200 transition">Close</button>
         </div>
     </div>
 </div>
