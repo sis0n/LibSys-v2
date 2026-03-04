@@ -38,6 +38,8 @@ class DashboardController extends Controller
         'topVisitors' => $this->dashboardRepo->getTopVisitors(),
         'weeklyActivity' => $this->dashboardRepo->getWeeklyActivity(),
         'visitorBreakdown' => $this->dashboardRepo->getVisitorBreakdown($filter),
+        'popularBooks' => $this->dashboardRepo->getPopularBooks(5),
+        'recentActivities' => $this->dashboardRepo->getRecentActivities(5),
       ];
 
       echo json_encode($response);

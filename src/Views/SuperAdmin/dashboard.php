@@ -52,7 +52,7 @@ $fullName = $_SESSION['user_data']['fullname'] ?? $_SESSION['role'] ?? 'Admin';
     ?>
       <div class="flex flex-col justify-between rounded-lg shadow-sm bg-white border-l-4 border-<?= $c['color'] ?>-500 overflow-hidden h-full">
         <div class="bg-<?= $c['color'] ?>-100 px-6 py-3 flex justify-between items-center">
-          <span class="text-sm font-semibold text-gray-600"><?= $c['title'] ?></span>
+          <span class="text-sm font-semibold text-gray-600 uppercase tracking-tight"><?= $c['title'] ?></span>
           <i class="ph <?= $c['icon'] ?> text-<?= $c['color'] ?>-500 text-xl"></i>
         </div>
         <div class="p-6 flex flex-col justify-between flex-grow">
@@ -67,14 +67,14 @@ $fullName = $_SESSION['user_data']['fullname'] ?? $_SESSION['role'] ?? 'Admin';
     <!-- Top Visitors (Table Design from Reports) -->
     <div class="border border-orange-200 rounded-xl p-6 shadow-sm bg-white h-[450px] flex flex-col">
       <div class="flex justify-between items-center mb-6">
-        <h3 class="text-sm font-black text-gray-800 uppercase tracking-widest flex items-center gap-2">
-          <i class="ph ph-crown text-orange-500 text-xl"></i> Top Visitors
+        <h3 class="text-lg font-black text-gray-800 uppercase tracking-widest flex items-center gap-2">
+          <i class="ph ph-crown text-orange-500 text-3xl"></i> Top Visitors
         </h3>
         <span class="text-[10px] bg-orange-100 text-orange-700 font-black uppercase tracking-wider px-3 py-1 rounded-full">This Month</span>
       </div>
       
       <div class="overflow-hidden rounded-lg border border-orange-100 flex-grow overflow-y-auto custom-scrollbar">
-        <table class="w-full text-xs border-collapse">
+        <table class="w-full text-sm border-collapse">
           <thead class="bg-orange-50 text-orange-700 sticky top-0 z-10">
             <tr>
               <th scope="col" class="px-4 py-3 text-left font-black uppercase w-12">Rank</th>
@@ -91,15 +91,68 @@ $fullName = $_SESSION['user_data']['fullname'] ?? $_SESSION['role'] ?? 'Admin';
       </div>
     </div>
 
-    <div class="border border-blue-200 rounded-lg p-6 shadow-sm bg-white h-[450px]">
+    <div class="border border-green-200 rounded-lg p-6 shadow-sm bg-white h-[450px]">
       <div class="flex justify-between items-center mb-4">
-        <h3 class="text-sm font-semibold text-gray-700 flex items-center gap-2">
-          <i class="ph ph-activity text-blue-500 text-lg"></i> Weekly Activity
+        <h3 class="text-lg font-bold text-gray-700 flex items-center gap-2">
+          <i class="ph ph-activity text-green-500 text-3xl"></i> Weekly Activity
         </h3>
-        <p class="text-xs text-gray-500">Visitors and checkouts</p>
+        <p class="text-sm text-gray-500">Visitors and checkouts</p>
       </div>
       <div class="h-64 sm:h-80">
         <canvas id="weeklyActivityChart"></canvas>
+      </div>
+    </div>
+  </section>
+
+  <section class="grid grid-cols-1 lg:grid-cols-2 gap-6 text-left mb-8">
+    <!-- Popular Books -->
+    <div class="border border-orange-200 rounded-xl p-6 shadow-sm bg-white h-[450px] flex flex-col">
+      <div class="flex justify-between items-center mb-6">
+        <h3 class="text-lg font-black text-gray-800 uppercase tracking-widest flex items-center gap-2">
+          <i class="ph ph-fire text-orange-500 text-3xl"></i> Popular Books
+        </h3>
+        <span class="text-[10px] bg-orange-100 text-orange-700 font-black uppercase tracking-wider px-3 py-1 rounded-full">All Time</span>
+      </div>
+      <div class="overflow-hidden rounded-lg border border-orange-100 flex-grow overflow-y-auto custom-scrollbar">
+        <table class="w-full text-sm border-collapse">
+          <thead class="bg-orange-50 text-orange-700 sticky top-0 z-10">
+            <tr>
+              <th scope="col" class="px-4 py-3 text-left font-black uppercase w-12">Rank</th>
+              <th scope="col" class="px-4 py-3 text-left font-black uppercase">Title</th>
+              <th scope="col" class="px-4 py-3 text-left font-black uppercase">Accession</th>
+              <th scope="col" class="px-4 py-3 text-right font-black uppercase">Borrows</th>
+            </tr>
+          </thead>
+          <tbody id="popularBooksTableBody" class="divide-y divide-orange-50 bg-white">
+            <!-- Rows injected via JS -->
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Recent Activities -->
+    <div class="border border-orange-200 rounded-xl p-6 shadow-sm bg-white h-[450px] flex flex-col">
+      <div class="flex justify-between items-center mb-6">
+        <h3 class="text-lg font-black text-gray-800 uppercase tracking-widest flex items-center gap-2">
+          <i class="ph ph-clock-counter-clockwise text-orange-500 text-3xl"></i> Recent Activities
+        </h3>
+        <span class="text-[10px] bg-orange-100 text-orange-700 font-black uppercase tracking-wider px-3 py-1 rounded-full">System Logs</span>
+      </div>
+      <div class="overflow-hidden rounded-lg border border-orange-100 flex-grow overflow-y-auto custom-scrollbar">
+        <table class="w-full text-sm border-collapse">
+          <thead class="bg-orange-50 text-orange-700 sticky top-0 z-10">
+            <tr>
+              <th scope="col" class="px-4 py-3 text-left font-black uppercase w-12">#</th>
+              <th scope="col" class="px-4 py-3 text-left font-black uppercase">User</th>
+              <th scope="col" class="px-4 py-3 text-left font-black uppercase">Action</th>
+              <th scope="col" class="px-4 py-3 text-left font-black uppercase">Details</th>
+              <th scope="col" class="px-4 py-3 text-right font-black uppercase">Date</th>
+            </tr>
+          </thead>
+          <tbody id="recentActivitiesTableBody" class="divide-y divide-orange-50 bg-white">
+            <!-- Rows injected via JS -->
+          </tbody>
+        </table>
       </div>
     </div>
   </section>

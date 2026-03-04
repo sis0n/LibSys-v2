@@ -147,11 +147,26 @@ class DashboardRepository
   public function getPopularBooks(int $limit = 5): array
   {
     $sql = "
-        SELECT b.title, COUNT(bti.item_id) AS borrow_count
+        SELECT b.title, b.author, b.accession_number, COUNT(bti.item_id) AS borrow_count
         FROM borrow_transaction_items bti
         JOIN books b ON bti.book_id = b.book_id
-        GROUP BY b.book_id, b.title
+        GROUP BY b.book_id, b.title, b.author, b.accession_number
         ORDER BY borrow_count DESC
+        LIMIT :limit
+    ";
+    $stmt = $this->db->prepare($sql);
+    $stmt->bindValue(':limit', $limit, PDO::PARAM_INT);
+    $stmt->execute();
+    return $stmt->fetchAll(PDO::FETCH_ASSOC);
+  }
+
+  public function getRecentActivities(int $limit = 5): array
+  {
+    $sql = "
+        SELECT al.action, al.details, al.created_at, u.username, CONCAT(u.first_name, ' ', u.last_name) as full_name
+        FROM audit_logs al
+        LEFT JOIN users u ON al.user_id = u.user_id
+        ORDER BY al.created_at DESC
         LIMIT :limit
     ";
     $stmt = $this->db->prepare($sql);

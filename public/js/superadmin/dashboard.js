@@ -4,6 +4,8 @@ document.addEventListener('DOMContentLoaded', function () {
   const availableBooksEl = document.getElementById('activeBooks'); 
   const borrowedBooksEl = document.getElementById('borrowedBooks');
   const topVisitorsTableBody = document.getElementById('topVisitorsTableBody');
+  const popularBooksTableBody = document.getElementById('popularBooksTableBody');
+  const recentActivitiesTableBody = document.getElementById('recentActivitiesTableBody');
   const weeklyActivityCtx = document.getElementById('weeklyActivityChart')?.getContext('2d');
 
   let weeklyActivityChartInstance = null;
@@ -32,10 +34,53 @@ document.addEventListener('DOMContentLoaded', function () {
 
         renderTopVisitorsTable(result.topVisitors);
         renderWeeklyChart(result.weeklyActivity);
+        renderPopularBooksTable(result.popularBooks);
+        renderRecentActivities(result.recentActivities);
       }
     } catch (error) {
       console.error('Error loading dashboard:', error);
     }
+  }
+
+  function renderPopularBooksTable(books) {
+    if (!popularBooksTableBody) return;
+    if (!books || books.length === 0) {
+      popularBooksTableBody.innerHTML = '<tr><td colspan="4" class="py-10 text-center text-gray-400 italic text-xs uppercase font-bold">No records found</td></tr>';
+      return;
+    }
+    popularBooksTableBody.innerHTML = books.map((b, index) => {
+      const truncatedTitle = b.title.length > 45 ? b.title.substring(0, 45) + '...' : b.title;
+      return `
+        <tr class="hover:bg-orange-50/30 transition-colors">
+          <td class="px-4 py-3 text-left font-black text-orange-600 text-[13px]">${index + 1}</td>
+          <td class="px-4 py-3 text-left font-bold text-gray-700 uppercase tracking-tight text-[13px]" title="${b.title}">${truncatedTitle}</td>
+          <td class="px-4 py-3 text-left font-bold text-gray-600 uppercase tracking-tight text-[13px]">${b.accession_number}</td>
+          <td class="px-4 py-3 text-right font-black text-gray-800 text-[13px]">${b.borrow_count}</td>
+        </tr>
+      `;
+    }).join('');
+  }
+
+  function renderRecentActivities(activities) {
+    if (!recentActivitiesTableBody) return;
+    if (!activities || activities.length === 0) {
+      recentActivitiesTableBody.innerHTML = '<tr><td colspan="5" class="py-10 text-center text-gray-400 italic text-xs uppercase font-bold">No recent activities</td></tr>';
+      return;
+    }
+    recentActivitiesTableBody.innerHTML = activities.map((a, index) => {
+      const date = new Date(a.created_at).toLocaleString('en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
+      const user = a.full_name || a.username || "System";
+      const truncatedDetails = a.details.length > 30 ? a.details.substring(0, 30) + '...' : a.details;
+      return `
+        <tr class="hover:bg-orange-50/30 transition-colors">
+          <td class="px-4 py-3 text-left font-black text-orange-600 text-[13px]">${index + 1}</td>
+          <td class="px-4 py-3 text-left font-bold text-gray-700 uppercase tracking-tight text-[13px]">${user}</td>
+          <td class="px-4 py-3 text-left font-bold text-orange-700 uppercase tracking-tight text-[13px]">${a.action}</td>
+          <td class="px-4 py-3 text-left font-bold text-gray-600 uppercase tracking-tight text-[13px]" title="${a.details}">${truncatedDetails}</td>
+          <td class="px-4 py-3 text-right font-black text-gray-800 text-[12px] whitespace-nowrap">${date}</td>
+        </tr>
+      `;
+    }).join('');
   }
 
   function renderTopVisitorsTable(visitors) {
@@ -49,11 +94,11 @@ document.addEventListener('DOMContentLoaded', function () {
     topVisitorsTableBody.innerHTML = visitors.map((v, index) => {
       return `
         <tr class="hover:bg-orange-50/30 transition-colors">
-          <td class="px-4 py-3 text-left font-black text-orange-600">${index + 1}</td>
-          <td class="px-4 py-3 text-left font-bold text-gray-700 uppercase tracking-tight text-[11px]">${v.user_name || "Unknown User"}</td>
-          <td class="px-4 py-3 text-left font-bold text-gray-600 uppercase tracking-tight text-[11px]">${v.student_number}</td>
-          <td class="px-4 py-3 text-left font-bold text-gray-600 uppercase tracking-tight text-[11px]">${v.year_level} - ${v.section}</td>
-          <td class="px-4 py-3 text-right font-black text-gray-800">${v.visits}</td>
+          <td class="px-4 py-3 text-left font-black text-orange-600 text-[13px]">${index + 1}</td>
+          <td class="px-4 py-3 text-left font-bold text-gray-700 uppercase tracking-tight text-[13px]">${v.user_name || "Unknown User"}</td>
+          <td class="px-4 py-3 text-left font-bold text-gray-600 uppercase tracking-tight text-[13px]">${v.student_number}</td>
+          <td class="px-4 py-3 text-left font-bold text-gray-600 uppercase tracking-tight text-[13px]">${v.year_level} - ${v.section}</td>
+          <td class="px-4 py-3 text-right font-black text-gray-800 text-[13px]">${v.visits}</td>
         </tr>
       `;
     }).join('');
@@ -75,8 +120,8 @@ document.addEventListener('DOMContentLoaded', function () {
         datasets: [{
             label: "Visitors",
             data: visitorsData,
-            borderColor: "#3b82f6",
-            backgroundColor: "rgba(59,130,246,0.1)",
+            borderColor: "#10b981",
+            backgroundColor: "rgba(16,185,129,0.1)",
             tension: 0.4,
             fill: true
           },
