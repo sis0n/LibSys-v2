@@ -17,6 +17,7 @@ class DashboardController extends Controller
   public function getData()
   {
     try {
+      $filter = $_GET['filter'] ?? 'month';
       $stats = $this->dashboardRepo->getDashboardStats()['data'] ?? [];
 
       $response = [
@@ -36,6 +37,7 @@ class DashboardController extends Controller
         ],
         'topVisitors' => $this->dashboardRepo->getTopVisitors(),
         'weeklyActivity' => $this->dashboardRepo->getWeeklyActivity(),
+        'visitorBreakdown' => $this->dashboardRepo->getVisitorBreakdown($filter),
       ];
 
       echo json_encode($response);

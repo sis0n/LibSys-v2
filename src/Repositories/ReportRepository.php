@@ -113,9 +113,18 @@ class ReportRepository
         }
     }
 
-    public function getTopVisitorsByYear()
+    public function getTopVisitorsFiltered(string $filter = 'month')
     {
         try {
+            $whereClause = "";
+            if ($filter === 'day') {
+                $whereClause = "DATE(a.date) = CURDATE()";
+            } elseif ($filter === 'month') {
+                $whereClause = "MONTH(a.date) = MONTH(CURDATE()) AND YEAR(a.date) = YEAR(CURDATE())";
+            } else { // year
+                $whereClause = "YEAR(a.date) = YEAR(CURDATE())";
+            }
+
             $sql = "
                 SELECT
                     CONCAT(u.first_name, ' ', u.last_name) AS full_name,
@@ -126,7 +135,7 @@ class ReportRepository
                 JOIN students s ON a.user_id = s.user_id
                 JOIN users u ON s.user_id = u.user_id
                 LEFT JOIN courses c ON s.course_id = c.course_id
-                WHERE YEAR(a.date) = YEAR(CURDATE())
+                WHERE $whereClause
                 GROUP BY a.user_id, u.first_name, u.last_name, s.student_id, c.course_code
                 ORDER BY visits DESC
                 LIMIT 10;
@@ -135,14 +144,23 @@ class ReportRepository
             $stmt->execute();
             return $stmt->fetchAll(PDO::FETCH_ASSOC);
         } catch (Exception $e) {
-            error_log("ReportRepository error in getTopVisitorsByYear: " . $e->getMessage());
+            error_log("ReportRepository error in getTopVisitorsFiltered: " . $e->getMessage());
             return [];
         }
     }
 
-    public function getTopBorrowers()
+    public function getTopBorrowers(string $filter = 'month')
     {
         try {
+            $whereClause = "";
+            if ($filter === 'day') {
+                $whereClause = "DATE(bt.borrowed_at) = CURDATE()";
+            } elseif ($filter === 'month') {
+                $whereClause = "MONTH(bt.borrowed_at) = MONTH(CURDATE()) AND YEAR(bt.borrowed_at) = YEAR(CURDATE())";
+            } else { // year
+                $whereClause = "YEAR(bt.borrowed_at) = YEAR(CURDATE())";
+            }
+
             $sql = "
                 SELECT 
                     CONCAT(u.first_name, ' ', u.last_name) AS full_name,
@@ -154,7 +172,7 @@ class ReportRepository
                 LEFT JOIN faculty f ON bt.faculty_id = f.faculty_id
                 LEFT JOIN staff st ON bt.staff_id = st.staff_id
                 JOIN users u ON u.user_id = COALESCE(s.user_id, f.user_id, st.user_id)
-                WHERE YEAR(bt.borrowed_at) = YEAR(CURDATE())
+                WHERE $whereClause
                 GROUP BY u.user_id, u.first_name, u.last_name, u.username, u.role
                 ORDER BY borrow_count DESC
                 LIMIT 10;

@@ -47,8 +47,9 @@ class ReportController extends Controller
         header('Expires: 0');
         header('Content-Type: application/json');
         try {
+            $filter = $_GET['filter'] ?? 'month';
             $repository = new ReportRepository();
-            $data = $repository->getTopVisitorsByYear();
+            $data = $repository->getTopVisitorsFiltered($filter);
             echo json_encode(['success' => true, 'data' => $data]);
         } catch (Exception $e) {
             http_response_code(500);
@@ -60,8 +61,9 @@ class ReportController extends Controller
     {
         header('Content-Type: application/json');
         try {
+            $filter = $_GET['filter'] ?? 'month';
             $repository = new ReportRepository();
-            $data = $repository->getTopBorrowers();
+            $data = $repository->getTopBorrowers($filter);
             echo json_encode(['success' => true, 'data' => $data]);
         } catch (Exception $e) {
             http_response_code(500);
@@ -154,11 +156,14 @@ class ReportController extends Controller
     {
         header('Content-Type: application/json');
         try {
+            $filter = $_GET['filter'] ?? 'month';
             $repository = new ReportRepository();
+            $dashboardRepo = new \App\Repositories\DashboardRepository();
             $response = [
                 'success' => true,
                 'topVisitors' => $repository->getTopVisitors(),
                 'weeklyActivity' => $repository->getWeeklyActivity(),
+                'visitorBreakdown' => $dashboardRepo->getVisitorBreakdown($filter),
             ];
             echo json_encode($response);
         } catch (\Exception $e) {

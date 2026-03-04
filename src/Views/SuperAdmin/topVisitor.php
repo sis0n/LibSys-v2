@@ -8,6 +8,11 @@
             <p class="text-gray-700">Comprehensive library statistics and analytics dashboard</p>
         </div>
         <div class="flex gap-2 text-sm">
+            <select id="global-report-filter" class="bg-white font-bold border border-orange-200 px-4 py-2 rounded-lg hover:bg-gray-50 transition-all cursor-pointer outline-none text-orange-700 shadow-sm">
+                <option value="day">Today</option>
+                <option value="month" selected>This Month</option>
+                <option value="year">This Year</option>
+            </select>
             <button
                 class="inline-flex items-center bg-white font-medium border border-orange-200 justify-center px-4 py-2 rounded-lg hover:bg-gray-100 px-4 gap-2 shadow-sm transition-all"
                 id="download-report-btn">
@@ -19,17 +24,28 @@
 
     <!-- Charts Row -->
     <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6">
-        <!-- Top Visitors Chart -->
-        <div class="bg-white border border-orange-200 rounded-xl shadow-sm p-6 transition-all hover:shadow-md">
-            <div class="flex items-center justify-between mb-6">
-                <h3 class="text-lg font-bold text-gray-800 flex items-center gap-2">
-                    <i class="ph ph-chart-bar text-green-500 text-xl"></i>
-                    Top Visitors
+        <!-- Visitor Breakdown Table -->
+        <div class="bg-white border border-orange-200 rounded-xl shadow-sm p-6 transition-all hover:shadow-md h-80 flex flex-col">
+            <div class="flex items-center justify-between mb-4">
+                <h3 class="text-sm font-black text-gray-800 uppercase tracking-widest flex items-center gap-2">
+                    <i class="ph ph-buildings text-orange-500 text-xl"></i>
+                    Top Departments by Visits
                 </h3>
-                <span class="text-[10px] bg-green-100 text-green-700 font-black uppercase tracking-wider px-3 py-1 rounded-full">This Month</span>
+                <span class="timeframe-badge text-[10px] bg-orange-100 text-orange-700 font-black uppercase tracking-wider px-3 py-1 rounded-full">This Month</span>
             </div>
-            <div class="h-64">
-                <canvas id="topVisitorsChart"></canvas>
+            <div class="overflow-y-auto custom-scrollbar flex-grow border border-orange-100 rounded-lg">
+                <table class="w-full text-xs border-collapse">
+                    <thead class="bg-orange-50 text-orange-700 sticky top-0">
+                        <tr>
+                            <th scope="col" class="px-4 py-2.5 text-left font-black uppercase w-12">Rank</th>
+                            <th scope="col" class="px-4 py-2.5 text-left font-black uppercase">Department</th>
+                            <th scope="col" class="px-4 py-2.5 text-right font-black uppercase">Visits</th>
+                        </tr>
+                    </thead>
+                    <tbody id="department-breakdown-tbody" class="divide-y divide-orange-50">
+                        <!-- Rows injected via JS -->
+                    </tbody>
+                </table>
             </div>
         </div>
 
@@ -116,14 +132,14 @@
                 Library Visit (by Department)
             </h3>
             <div class="overflow-x-auto rounded-lg border border-orange-100">
-                <table class="w-full text-xs border-collapse">
-                    <thead class="bg-orange-50 text-orange-700">
+                <table class="w-full text-sm border-collapse">
+                    <thead class="bg-orange-50 text-orange-700 border-b border-orange-100">
                         <tr>
-                            <th scope="col" class="px-4 py-2.5 text-left font-black uppercase">Department</th>
-                            <th scope="col" class="px-4 py-2.5 text-center font-black uppercase">Today</th>
-                            <th scope="col" class="px-4 py-2.5 text-center font-black uppercase">Week</th>
-                            <th scope="col" class="px-4 py-2.5 text-center font-black uppercase">Month</th>
-                            <th scope="col" class="px-4 py-2.5 text-center font-black uppercase">Year</th>
+                            <th scope="col" class="px-4 py-3 text-left font-black uppercase">Department</th>
+                            <th scope="col" class="px-4 py-3 text-center font-black uppercase">Today</th>
+                            <th scope="col" class="px-4 py-3 text-center font-black uppercase">Week</th>
+                            <th scope="col" class="px-4 py-3 text-center font-black uppercase">Month</th>
+                            <th scope="col" class="px-4 py-3 text-center font-black uppercase">Year</th>
                         </tr>
                     </thead>
                     <tbody id="library-visit-tbody" class="divide-y divide-orange-50"></tbody>
@@ -133,7 +149,10 @@
 
         <!-- Top 10 Visitors Table -->
         <div class="bg-white border border-orange-200 rounded-xl shadow-sm p-5 transition-all hover:shadow-md">
-            <h3 class="text-sm font-black text-gray-800 uppercase tracking-widest mb-4 border-b border-orange-50 pb-3">Top 10 Visitors (by Year)</h3>
+            <div class="flex justify-between items-center mb-4 border-b border-orange-50 pb-3">
+                <h3 class="text-sm font-black text-gray-800 uppercase tracking-widest">Top 10 Visitors</h3>
+                <span class="timeframe-badge text-[10px] bg-orange-100 text-orange-700 font-black uppercase tracking-wider px-3 py-1 rounded-full">This Month</span>
+            </div>
             <div class="overflow-x-auto rounded-lg border border-orange-100">
                 <table class="w-full text-xs border-collapse">
                     <thead class="bg-orange-50 text-orange-700">
@@ -155,7 +174,10 @@
     <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mt-8">
         <!-- Top 10 Borrowers Table -->
         <div class="bg-white border border-orange-200 rounded-xl shadow-sm p-5 transition-all hover:shadow-md">
-            <h3 class="text-sm font-black text-gray-800 uppercase tracking-widest mb-4 border-b border-orange-50 pb-3">Top 10 Borrowers (by Year)</h3>
+            <div class="flex justify-between items-center mb-4 border-b border-orange-50 pb-3">
+                <h3 class="text-sm font-black text-gray-800 uppercase tracking-widest">Top 10 Borrowers</h3>
+                <span class="timeframe-badge text-[10px] bg-orange-100 text-orange-700 font-black uppercase tracking-wider px-3 py-1 rounded-full">This Month</span>
+            </div>
             <div class="overflow-x-auto rounded-lg border border-orange-100">
                 <table class="w-full text-xs border-collapse">
                     <thead class="bg-orange-50 text-orange-700">

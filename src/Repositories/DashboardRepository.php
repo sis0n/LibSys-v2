@@ -160,13 +160,22 @@ class DashboardRepository
     return $stmt->fetchAll(PDO::FETCH_ASSOC);
   }
 
-  public function getVisitorBreakdown(): array
+  public function getVisitorBreakdown(string $filter = 'month'): array
   {
+    $whereClause = "";
+    if ($filter === 'day') {
+        $whereClause = "WHERE DATE(a.first_scan_at) = CURDATE()";
+    } elseif ($filter === 'month') {
+        $whereClause = "WHERE MONTH(a.first_scan_at) = MONTH(CURDATE()) AND YEAR(a.first_scan_at) = YEAR(CURDATE())";
+    } else { // year
+        $whereClause = "WHERE YEAR(a.first_scan_at) = YEAR(CURDATE())";
+    }
+
     $sqlRole = "
         SELECT u.role, COUNT(a.id) AS count
         FROM attendance a
         JOIN users u ON a.user_id = u.user_id
-        WHERE DATE(a.first_scan_at) >= DATE_SUB(CURDATE(), INTERVAL 30 DAY)
+        $whereClause
         GROUP BY u.role
     ";
     $stmtRole = $this->db->query($sqlRole);
@@ -178,7 +187,7 @@ class DashboardRepository
         JOIN students s ON a.user_id = s.user_id
         JOIN courses c ON s.course_id = c.course_id
         JOIN colleges cl ON c.college_id = cl.college_id
-        WHERE DATE(a.first_scan_at) >= DATE_SUB(CURDATE(), INTERVAL 30 DAY)
+        $whereClause
         GROUP BY cl.college_name
         ORDER BY count DESC
         LIMIT 5

@@ -192,12 +192,12 @@ document.addEventListener('DOMContentLoaded', function () {
         }
     }
 
-    async function populateTopVisitors() {
+    async function populateTopVisitors(filter = 'month') {
         const tbody = document.getElementById('top-visitors-tbody');
         if (!tbody) return;
         tbody.innerHTML = '<tr><td colspan="5" class="text-center p-4"><i class="ph ph-spinner animate-spin text-lg mr-2"></i>Loading...</td></tr>';
         try {
-            const response = await fetch(`${BASE_URL}/api/superadmin/reports/top-visitors`);
+            const response = await fetch(`${BASE_URL}/api/superadmin/reports/top-visitors?filter=${filter}`);
             const result = await response.json();
             tbody.innerHTML = '';
             if (result.success && result.data && result.data.length > 0) {
@@ -219,7 +219,7 @@ document.addEventListener('DOMContentLoaded', function () {
                     tbody.appendChild(tr);
                 });
             } else {
-                tbody.innerHTML = '<tr><td colspan="5" class="text-center p-4">No visitor data available.</td></tr>';
+                tbody.innerHTML = `<tr><td colspan="5" class="text-center p-4">No visitor data available for this timeframe.</td></tr>`;
             }
             return true;
         } catch (error) {
@@ -228,12 +228,12 @@ document.addEventListener('DOMContentLoaded', function () {
         }
     }
 
-    async function populateTopBorrowers() {
+    async function populateTopBorrowers(filter = 'month') {
         const tbody = document.getElementById('top-borrowers-tbody');
         if (!tbody) return;
         tbody.innerHTML = '<tr><td colspan="5" class="text-center p-4"><i class="ph ph-spinner animate-spin text-lg mr-2"></i>Loading...</td></tr>';
         try {
-            const response = await fetch(`${BASE_URL}/api/superadmin/reports/top-borrowers`);
+            const response = await fetch(`${BASE_URL}/api/superadmin/reports/top-borrowers?filter=${filter}`);
             const result = await response.json();
             tbody.innerHTML = '';
             if (result.success && result.data && result.data.length > 0) {
@@ -251,7 +251,7 @@ document.addEventListener('DOMContentLoaded', function () {
                     tbody.appendChild(tr);
                 });
             } else {
-                tbody.innerHTML = '<tr><td colspan="5" class="text-center p-4">No data available.</td></tr>';
+                tbody.innerHTML = `<tr><td colspan="5" class="text-center p-4">No borrower data available for this timeframe.</td></tr>`;
             }
             return true;
         } catch (error) {
@@ -295,22 +295,30 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     async function initializeCharts() {
-        const topCtx = document.getElementById('topVisitorsChart')?.getContext('2d');
+        const breakdownTbody = document.getElementById('department-breakdown-tbody');
         const weeklyCtx = document.getElementById('weeklyActivityChart')?.getContext('2d');
         try {
             const res = await fetch(`${BASE_URL}/api/superadmin/dashboard/getData`);
             const result = await res.json();
             if (!result.success) return false;
-            if (topCtx && result.topVisitors) {
-                new Chart(topCtx, {
-                    type: "bar",
-                    data: {
-                        labels: result.topVisitors.map(v => v.user_name || "Unknown"),
-                        datasets: [{ label: "Visits", data: result.topVisitors.map(v => v.visits), backgroundColor: "#22c55e", borderRadius: 6 }]
-                    },
-                    options: { responsive: true, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true } } }
+
+            if (breakdownTbody && result.visitorBreakdown && result.visitorBreakdown.byDepartment) {
+                breakdownTbody.innerHTML = '';
+                result.visitorBreakdown.byDepartment.forEach((dept, index) => {
+                    const tr = document.createElement('tr');
+                    tr.classList.add('hover:bg-orange-50/30', 'transition-colors');
+                    tr.innerHTML = `
+                        <td class="px-4 py-3 text-left font-black text-orange-600">${index + 1}</td>
+                        <td class="px-4 py-3 text-left font-bold text-gray-700 uppercase tracking-tight text-[11px]">${dept.department || "N/A"}</td>
+                        <td class="px-4 py-3 text-right font-black text-gray-800">${dept.count}</td>
+                    `;
+                    breakdownTbody.appendChild(tr);
                 });
+                if (result.visitorBreakdown.byDepartment.length === 0) {
+                    breakdownTbody.innerHTML = '<tr><td colspan="3" class="py-10 text-center text-gray-400 italic text-xs uppercase font-bold">No records found</td></tr>';
+                }
             }
+
             if (weeklyCtx && result.weeklyActivity) {
                 new Chart(weeklyCtx, {
                     type: "line",
@@ -350,6 +358,14 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     initReports();
+
+    document.getElementById('top-visitors-filter')?.addEventListener('change', (e) => {
+        populateTopVisitors(e.target.value);
+    });
+
+    document.getElementById('top-borrowers-filter')?.addEventListener('change', (e) => {
+        populateTopBorrowers(e.target.value);
+    });
 
     if (downloadReportBtn) {
         downloadReportBtn.addEventListener('click', () => customDateModal?.classList.remove('hidden'));
