@@ -18,36 +18,6 @@ function showLoadingModal(message = "Processing request...", subMessage = "Pleas
     });
 }
 
-async function showConfirmationModal(title, text, confirmText = "Confirm", icon = "ph-warning-circle") {
-    if (typeof Swal == "undefined") return confirm(title);
-    const result = await Swal.fire({
-        background: "transparent",
-        html: `
-            <div class="flex flex-col text-center">
-                <div class="flex justify-center mb-3">
-                    <div class="flex items-center justify-center w-14 h-14 rounded-full bg-orange-100 text-orange-600">
-                        <i class="ph ${icon} text-2xl"></i>
-                    </div>
-                </div>
-                <h3 class="text-[17px] font-semibold text-orange-700">${title}</h3>
-                <p class="text-[14px] text-gray-700 mt-1">${text}</p>
-            </div>
-        `,
-        showCancelButton: true,
-        confirmButtonText: confirmText,
-        cancelButtonText: "Cancel",
-        customClass: {
-            popup:
-                "!rounded-xl !shadow-md !p-6 !bg-gradient-to-b !from-[#fffdfb] !to-[#fff6ef] !border-2 !border-orange-400 shadow-[0_0_8px_#ffb34770]",
-            confirmButton:
-                "!bg-orange-600 !text-white !px-5 !py-2.5 !rounded-lg hover:!bg-orange-700",
-            cancelButton:
-                "!bg-gray-200 !text-gray-800 !px-5 !py-2.5 !rounded-lg hover:!bg-gray-300",
-        },
-    });
-    return result.isConfirmed;
-}
-
 document.addEventListener('DOMContentLoaded', function () {
     const customDateModal = document.getElementById('customDateModal');
     const confirmDateRangeBtn = document.getElementById('confirmDateRange');
@@ -55,18 +25,19 @@ document.addEventListener('DOMContentLoaded', function () {
     const startDateInput = document.getElementById('startDate');
     const endDateInput = document.getElementById('endDate');
     const downloadReportBtn = document.getElementById('download-report-btn');
+    const globalFilter = document.getElementById('global-report-filter');
 
     const startTime = Date.now();
     if (typeof showLoadingModal !== 'undefined') {
         showLoadingModal("Loading Reports Dashboard...", "Fetching all reports and charts.");
     }
 
-    async function populateCirculatedBooks() {
+    async function populateCirculatedBooks(filter = 'month') {
         const tbody = document.getElementById('circulated-books-tbody');
         if (!tbody) return;
         tbody.innerHTML = '<tr><td colspan="5" class="text-center p-4"><i class="ph ph-spinner animate-spin text-lg mr-2"></i>Loading...</td></tr>';
         try {
-            const response = await fetch(`${BASE_URL}/api/superadmin/reports/circulated-books`);
+            const response = await fetch(`${BASE_URL}/api/superadmin/reports/circulated-books?filter=${filter}`);
             const result = await response.json();
             tbody.innerHTML = '';
             if (result.data && result.data.length > 0) {
@@ -75,6 +46,9 @@ document.addEventListener('DOMContentLoaded', function () {
                     const tr = document.createElement('tr');
                     if (isTotalRow) tr.classList.add('bg-orange-50', 'font-bold');
                     else tr.classList.add('border-b', 'border-orange-100');
+                    
+                    const count = row.filtered_count !== undefined ? row.filtered_count : (filter === 'day' ? row.today : (filter === 'year' ? row.year : row.month));
+
                     tr.innerHTML = `
                         <td class="px-4 py-2 text-left ${isTotalRow ? 'font-bold' : 'font-medium text-gray-700'}">${row.category}</td>
                         <td class="px-4 py-2 text-center">${row.today || 0}</td>
@@ -85,7 +59,7 @@ document.addEventListener('DOMContentLoaded', function () {
                     tbody.appendChild(tr);
                 });
             } else {
-                tbody.innerHTML = '<tr><td colspan="5" class="text-center p-4">No data available.</td></tr>';
+                tbody.innerHTML = '<tr><td colspan="5" class="text-center p-4 text-gray-500 italic">No data available for this timeframe.</td></tr>';
             }
             return true;
         } catch (error) {
@@ -94,12 +68,12 @@ document.addEventListener('DOMContentLoaded', function () {
         }
     }
 
-    async function populateCirculatedEquipments() {
+    async function populateCirculatedEquipments(filter = 'month') {
         const tbody = document.getElementById('circulated-equipments-tbody');
         if (!tbody) return;
         tbody.innerHTML = '<tr><td colspan="5" class="text-center p-4"><i class="ph ph-spinner animate-spin text-lg mr-2"></i>Loading...</td></tr>';
         try {
-            const response = await fetch(`${BASE_URL}/api/superadmin/reports/circulated-equipments`);
+            const response = await fetch(`${BASE_URL}/api/superadmin/reports/circulated-equipments?filter=${filter}`);
             const result = await response.json();
             tbody.innerHTML = '';
             if (result.data && result.data.length > 0) {
@@ -118,7 +92,7 @@ document.addEventListener('DOMContentLoaded', function () {
                     tbody.appendChild(tr);
                 });
             } else {
-                tbody.innerHTML = '<tr><td colspan="5" class="text-center p-4">No data available.</td></tr>';
+                tbody.innerHTML = '<tr><td colspan="5" class="text-center p-4 text-gray-500 italic">No data available for this timeframe.</td></tr>';
             }
             return true;
         } catch (error) {
@@ -127,12 +101,12 @@ document.addEventListener('DOMContentLoaded', function () {
         }
     }
 
-    async function populateDeletedBooks() {
+    async function populateDeletedBooks(filter = 'month') {
         const tbody = document.getElementById('deleted-books-tbody');
         if (!tbody) return;
         tbody.innerHTML = '<tr><td colspan="4" class="text-center p-4"><i class="ph ph-spinner animate-spin text-lg mr-2"></i>Loading...</td></tr>';
         try {
-            const response = await fetch(`${BASE_URL}/api/superadmin/reports/deleted-books`);
+            const response = await fetch(`${BASE_URL}/api/superadmin/reports/deleted-books?filter=${filter}`);
             const result = await response.json();
             tbody.innerHTML = '';
             if (result.success && result.data && result.data.length > 0) {
@@ -150,7 +124,7 @@ document.addEventListener('DOMContentLoaded', function () {
                     tbody.appendChild(tr);
                 });
             } else {
-                tbody.innerHTML = '<tr><td colspan="4" class="text-center p-4">No data available.</td></tr>';
+                tbody.innerHTML = '<tr><td colspan="4" class="text-center p-4 text-gray-500 italic">No data available for this timeframe.</td></tr>';
             }
             return true;
         } catch (error) {
@@ -159,12 +133,12 @@ document.addEventListener('DOMContentLoaded', function () {
         }
     }
 
-    async function populateLibraryVisitByDepartment() {
+    async function populateLibraryVisitByDepartment(filter = 'month') {
         const tbody = document.getElementById('library-visit-tbody');
         if (!tbody) return;
         tbody.innerHTML = '<tr><td colspan="5" class="text-center p-4"><i class="ph ph-spinner animate-spin text-lg mr-2"></i>Loading...</td></tr>';
         try {
-            const response = await fetch(`${BASE_URL}/api/superadmin/reports/library-visits-department`);
+            const response = await fetch(`${BASE_URL}/api/superadmin/reports/library-visits-department?filter=${filter}`);
             const result = await response.json();
             tbody.innerHTML = '';
             if (result.success && result.data && result.data.length > 0) {
@@ -183,7 +157,7 @@ document.addEventListener('DOMContentLoaded', function () {
                     tbody.appendChild(tr);
                 });
             } else {
-                tbody.innerHTML = '<tr><td colspan="5" class="text-center p-4">No data available.</td></tr>';
+                tbody.innerHTML = '<tr><td colspan="5" class="text-center p-4 text-gray-500 italic">No data available for this timeframe.</td></tr>';
             }
             return true;
         } catch (error) {
@@ -219,7 +193,7 @@ document.addEventListener('DOMContentLoaded', function () {
                     tbody.appendChild(tr);
                 });
             } else {
-                tbody.innerHTML = `<tr><td colspan="5" class="text-center p-4">No visitor data available for this timeframe.</td></tr>`;
+                tbody.innerHTML = `<tr><td colspan="5" class="text-center p-4 text-gray-500 italic">No visitor data available for this timeframe.</td></tr>`;
             }
             return true;
         } catch (error) {
@@ -251,7 +225,7 @@ document.addEventListener('DOMContentLoaded', function () {
                     tbody.appendChild(tr);
                 });
             } else {
-                tbody.innerHTML = `<tr><td colspan="5" class="text-center p-4">No borrower data available for this timeframe.</td></tr>`;
+                tbody.innerHTML = `<tr><td colspan="5" class="text-center p-4 text-gray-500 italic">No borrower data available for this timeframe.</td></tr>`;
             }
             return true;
         } catch (error) {
@@ -260,12 +234,12 @@ document.addEventListener('DOMContentLoaded', function () {
         }
     }
 
-    async function populateMostBorrowedBooks() {
+    async function populateMostBorrowedBooks(filter = 'month') {
         const tbody = document.getElementById('most-borrowed-books-tbody');
         if (!tbody) return;
         tbody.innerHTML = '<tr><td colspan="4" class="text-center p-4"><i class="ph ph-spinner animate-spin text-lg mr-2"></i>Loading...</td></tr>';
         try {
-            const response = await fetch(`${BASE_URL}/api/superadmin/reports/most-borrowed-books`);
+            const response = await fetch(`${BASE_URL}/api/superadmin/reports/most-borrowed-books?filter=${filter}`);
             const result = await response.json();
             tbody.innerHTML = '';
             if (result.success && result.data && result.data.length > 0) {
@@ -285,7 +259,7 @@ document.addEventListener('DOMContentLoaded', function () {
                     tbody.appendChild(tr);
                 });
             } else {
-                tbody.innerHTML = '<tr><td colspan="4" class="text-center p-4">No data available.</td></tr>';
+                tbody.innerHTML = '<tr><td colspan="4" class="text-center p-4 text-gray-500 italic">No data available for this timeframe.</td></tr>';
             }
             return true;
         } catch (error) {
@@ -294,14 +268,35 @@ document.addEventListener('DOMContentLoaded', function () {
         }
     }
 
-    async function initializeCharts() {
+    async function initializeCharts(filter = 'month') {
         const breakdownTbody = document.getElementById('department-breakdown-tbody');
         const weeklyCtx = document.getElementById('weeklyActivityChart')?.getContext('2d');
         try {
-            const res = await fetch(`${BASE_URL}/api/superadmin/dashboard/getData`);
+            const res = await fetch(`${BASE_URL}/api/superadmin/reports/getActivityReport?filter=${filter}`);
             const result = await res.json();
             if (!result.success) return false;
 
+            // Update Activity Chart
+            if (weeklyCtx && result.activityData) {
+                if (window.activityChartInstance) window.activityChartInstance.destroy();
+                window.activityChartInstance = new Chart(weeklyCtx, {
+                    type: "line",
+                    data: {
+                        labels: result.activityData.map(w => w.label),
+                        datasets: [
+                            { label: "Visitors", data: result.activityData.map(w => w.visitors), borderColor: "#3b82f6", backgroundColor: "rgba(59,130,246,0.1)", tension: 0.4, fill: true },
+                            { label: "Borrows", data: result.activityData.map(w => w.borrows), borderColor: "#f59e0b", backgroundColor: "rgba(245,158,11,0.1)", tension: 0.4, fill: true }
+                        ]
+                    },
+                    options: { 
+                        responsive: true, 
+                        maintainAspectRatio: false,
+                        scales: { y: { beginAtZero: true } } 
+                    }
+                });
+            }
+
+            // Update Department Breakdown Table
             if (breakdownTbody && result.visitorBreakdown && result.visitorBreakdown.byDepartment) {
                 breakdownTbody.innerHTML = '';
                 result.visitorBreakdown.byDepartment.forEach((dept, index) => {
@@ -319,52 +314,39 @@ document.addEventListener('DOMContentLoaded', function () {
                 }
             }
 
-            if (weeklyCtx && result.weeklyActivity) {
-                new Chart(weeklyCtx, {
-                    type: "line",
-                    data: {
-                        labels: result.weeklyActivity.map(w => w.day),
-                        datasets: [
-                            { label: "Visitors", data: result.weeklyActivity.map(w => w.visitors), borderColor: "#3b82f6", backgroundColor: "rgba(59,130,246,0.1)", tension: 0.4, fill: true },
-                            { label: "Borrows", data: result.weeklyActivity.map(w => w.borrows), borderColor: "#f59e0b", backgroundColor: "rgba(245,158,11,0.1)", tension: 0.4, fill: true }
-                        ]
-                    },
-                    options: { responsive: true, scales: { y: { beginAtZero: true } } }
-                });
-            }
             return true;
         } catch (err) {
             return false;
         }
     }
 
-    async function initReports() {
+    async function initReports(filter = 'month') {
         const results = await Promise.all([
-            populateCirculatedBooks(),
-            populateCirculatedEquipments(),
-            populateDeletedBooks(),
-            populateLibraryVisitByDepartment(),
-            populateTopVisitors(),
-            populateTopBorrowers(),
-            populateMostBorrowedBooks(),
-            initializeCharts()
+            populateCirculatedBooks(filter),
+            populateCirculatedEquipments(filter),
+            populateDeletedBooks(filter),
+            populateLibraryVisitByDepartment(filter),
+            populateTopVisitors(filter),
+            populateTopBorrowers(filter),
+            populateMostBorrowedBooks(filter),
+            initializeCharts(filter)
         ]);
+
+        const badges = document.querySelectorAll('.timeframe-badge');
+        const labels = { 'day': 'Today', 'month': 'This Month', 'year': 'This Year' };
+        badges.forEach(b => b.textContent = labels[filter]);
+
         const criticalFailure = results.some(result => result === false);
         const elapsed = Date.now() - startTime;
         const minDelay = 1000;
         if (elapsed < minDelay) await new Promise(r => setTimeout(r, minDelay - elapsed));
         if (typeof Swal !== 'undefined') Swal.close();
-        if (criticalFailure) alert("Page Load Alert: Some reports failed to load.");
     }
 
-    initReports();
+    initReports('month');
 
-    document.getElementById('top-visitors-filter')?.addEventListener('change', (e) => {
-        populateTopVisitors(e.target.value);
-    });
-
-    document.getElementById('top-borrowers-filter')?.addEventListener('change', (e) => {
-        populateTopBorrowers(e.target.value);
+    globalFilter?.addEventListener('change', (e) => {
+        initReports(e.target.value);
     });
 
     if (downloadReportBtn) {
@@ -379,7 +361,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 customDateModal.classList.add('hidden');
                 const form = document.createElement('form');
                 form.method = 'POST';
-                form.action = `${BASE_URL}/generate-report`;
+                form.action = `${BASE_URL}/api/superadmin/reports/generate-report`;
                 form.target = '_blank';
                 [['start_date', start], ['end_date', end]].forEach(([n, v]) => {
                     const i = document.createElement('input');

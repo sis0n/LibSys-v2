@@ -15,8 +15,9 @@ class ReportController extends Controller
         header('Expires: 0');
         header('Content-Type: application/json');
         try {
+            $filter = $_GET['filter'] ?? 'month';
             $repository = new ReportRepository();
-            $data = $repository->getCirculatedBooksSummary();
+            $data = $repository->getCirculatedBooksSummary($filter);
             echo json_encode(['success' => true, 'data' => $data]);
         } catch (Exception $e) {
             http_response_code(500);
@@ -31,8 +32,9 @@ class ReportController extends Controller
         header('Expires: 0');
         header('Content-Type: application/json');
         try {
+            $filter = $_GET['filter'] ?? 'month';
             $repository = new ReportRepository();
-            $data = $repository->getCirculatedEquipmentsSummary();
+            $data = $repository->getCirculatedEquipmentsSummary($filter);
             echo json_encode(['success' => true, 'data' => $data]);
         } catch (Exception $e) {
             http_response_code(500);
@@ -75,8 +77,9 @@ class ReportController extends Controller
     {
         header('Content-Type: application/json');
         try {
+            $filter = $_GET['filter'] ?? 'month';
             $repository = new ReportRepository();
-            $data = $repository->getMostBorrowedBooks();
+            $data = $repository->getMostBorrowedBooks($filter);
             echo json_encode(['success' => true, 'data' => $data]);
         } catch (Exception $e) {
             http_response_code(500);
@@ -91,8 +94,9 @@ class ReportController extends Controller
         header('Expires: 0');
         header('Content-Type: application/json');
         try {
+            $filter = $_GET['filter'] ?? 'month';
             $repository = new ReportRepository();
-            $data = $repository->getLibraryVisitsByDepartment();
+            $data = $repository->getLibraryVisitsByDepartment($filter);
             echo json_encode(['success' => true, 'data' => $data]);
         } catch (Exception $e) {
             http_response_code(500);
@@ -107,15 +111,16 @@ class ReportController extends Controller
         header('Expires: 0');
         header('Content-Type: application/json');
         try {
+            $filter = $_GET['filter'] ?? 'month';
             $repository = new ReportRepository();
-            $dbData = $repository->getDeletedBooksReport();
+            $dbData = $repository->getDeletedBooksReport($filter);
 
             $statsByYear = [];
             foreach ($dbData as $row) {
                 $statsByYear[$row['year']] = [
                     'month' => (int)$row['month'],
                     'today' => (int)$row['today'],
-                    'count' => (int)$row['count']
+                    'filtered_count' => (int)$row['filtered_count']
                 ];
             }
 
@@ -126,14 +131,14 @@ class ReportController extends Controller
             $totalToday = 0;
 
             foreach ($years as $year) {
-                $stats = $statsByYear[$year] ?? ['month' => 0, 'today' => 0, 'count' => 0];
+                $stats = $statsByYear[$year] ?? ['month' => 0, 'today' => 0, 'filtered_count' => 0];
                 $reportData[] = [
                     "year" => (string)$year,
                     "month" => $stats['month'],
                     "today" => $stats['today'],
-                    "count" => $stats['count']
+                    "count" => $stats['filtered_count']
                 ];
-                $totalCount += $stats['count'];
+                $totalCount += $stats['filtered_count'];
                 $totalMonth += $stats['month'];
                 $totalToday += $stats['today'];
             }
@@ -152,6 +157,27 @@ class ReportController extends Controller
         }
     }
 
+    public function getActivityReport()
+    {
+        header('Content-Type: application/json');
+        try {
+            $filter = $_GET['filter'] ?? 'month';
+            $repository = new ReportRepository();
+            $dashboardRepo = new \App\Repositories\DashboardRepository();
+            $data = $repository->getActivityReport($filter);
+            $breakdown = $dashboardRepo->getVisitorBreakdown($filter);
+            
+            echo json_encode([
+                'success' => true, 
+                'activityData' => $data,
+                'visitorBreakdown' => $breakdown
+            ]);
+        } catch (Exception $e) {
+            http_response_code(500);
+            echo json_encode(['success' => false, 'message' => 'Error fetching activity report: ' . $e->getMessage()]);
+        }
+    }
+
     public function getReportGraphData()
     {
         header('Content-Type: application/json');
@@ -162,7 +188,7 @@ class ReportController extends Controller
             $response = [
                 'success' => true,
                 'topVisitors' => $repository->getTopVisitors(),
-                'weeklyActivity' => $repository->getWeeklyActivity(),
+                'activityData' => $repository->getActivityReport($filter),
                 'visitorBreakdown' => $dashboardRepo->getVisitorBreakdown($filter),
             ];
             echo json_encode($response);

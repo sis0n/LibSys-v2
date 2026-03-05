@@ -51,12 +51,12 @@
 
         <!-- Weekly Activity Chart -->
         <div class="bg-white border border-orange-200 rounded-xl shadow-sm p-6 transition-all hover:shadow-md">
-            <div class="mb-6">
+            <div class="flex items-center justify-between mb-6">
                 <h3 class="text-lg font-bold text-gray-800 flex items-center gap-2">
                     <i class="ph ph-chart-line text-blue-500 text-xl"></i>
                     Weekly Activity
                 </h3>
-                <p class="text-xs text-gray-500 font-medium">Daily visitors and book checkouts</p>
+                <span class="timeframe-badge text-[10px] bg-blue-100 text-blue-700 font-black uppercase tracking-wider px-3 py-1 rounded-full">This Month</span>
             </div>
             <div class="h-64">
                 <canvas id="weeklyActivityChart"></canvas>
@@ -69,7 +69,10 @@
 
         <!-- Circulated Books Table -->
         <div class="bg-white border border-orange-200 rounded-xl shadow-sm p-5 transition-all hover:shadow-md">
-            <h3 class="text-sm font-black text-gray-800 uppercase tracking-widest mb-4 border-b border-orange-50 pb-3">Circulated Books</h3>
+            <div class="flex justify-between items-center mb-4 border-b border-orange-50 pb-3">
+                <h3 class="text-sm font-black text-gray-800 uppercase tracking-widest">Circulated Books</h3>
+                <span class="timeframe-badge text-[10px] bg-orange-100 text-orange-700 font-black uppercase tracking-wider px-3 py-1 rounded-full">This Month</span>
+            </div>
             <div class="overflow-x-auto rounded-lg border border-orange-100">
                 <table class="w-full text-xs border-collapse">
                     <thead class="bg-orange-50 text-orange-700">
@@ -88,7 +91,10 @@
 
         <!-- Circulated Equipments Table -->
         <div class="bg-white border border-orange-200 rounded-xl shadow-sm p-5 transition-all hover:shadow-md">
-            <h3 class="text-sm font-black text-gray-800 uppercase tracking-widest mb-4 border-b border-orange-50 pb-3">Circulated Equipments</h3>
+            <div class="flex justify-between items-center mb-4 border-b border-orange-50 pb-3">
+                <h3 class="text-sm font-black text-gray-800 uppercase tracking-widest">Circulated Equipments</h3>
+                <span class="timeframe-badge text-[10px] bg-orange-100 text-orange-700 font-black uppercase tracking-wider px-3 py-1 rounded-full">This Month</span>
+            </div>
             <div class="overflow-x-auto rounded-lg border border-orange-100">
                 <table class="w-full text-xs border-collapse">
                     <thead class="bg-orange-50 text-orange-700">
@@ -107,7 +113,10 @@
 
         <!-- Deleted Books Table -->
         <div class="bg-white border border-orange-200 rounded-xl shadow-sm p-5 transition-all hover:shadow-md">
-            <h3 class="text-sm font-black text-gray-800 uppercase tracking-widest mb-4 border-b border-orange-50 pb-3">Deleted Books</h3>
+            <div class="flex justify-between items-center mb-4 border-b border-orange-50 pb-3">
+                <h3 class="text-sm font-black text-gray-800 uppercase tracking-widest">Deleted Books</h3>
+                <span class="timeframe-badge text-[10px] bg-orange-100 text-orange-700 font-black uppercase tracking-wider px-3 py-1 rounded-full">This Month</span>
+            </div>
             <div class="overflow-x-auto rounded-lg border border-orange-100">
                 <table class="w-full text-xs border-collapse">
                     <thead class="bg-orange-50 text-orange-700">
@@ -128,9 +137,10 @@
     <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mt-8">
         <!-- Library Visit (by Department) Table -->
         <div class="bg-white border border-orange-200 rounded-xl shadow-sm p-5 transition-all hover:shadow-md">
-            <h3 class="text-sm font-black text-gray-800 uppercase tracking-widest mb-4 border-b border-orange-50 pb-3">
-                Library Visit (by Department)
-            </h3>
+            <div class="flex justify-between items-center mb-4 border-b border-orange-50 pb-3">
+                <h3 class="text-sm font-black text-gray-800 uppercase tracking-widest">Library Visit (by Department)</h3>
+                <span class="timeframe-badge text-[10px] bg-orange-100 text-orange-700 font-black uppercase tracking-wider px-3 py-1 rounded-full">This Month</span>
+            </div>
             <div class="overflow-x-auto rounded-lg border border-orange-100">
                 <table class="w-full text-sm border-collapse">
                     <thead class="bg-orange-50 text-orange-700 border-b border-orange-100">
@@ -196,7 +206,10 @@
 
         <!-- Most Borrowed Books Table -->
         <div class="bg-white border border-orange-200 rounded-xl shadow-sm p-5 transition-all hover:shadow-md">
-            <h3 class="text-sm font-black text-gray-800 uppercase tracking-widest mb-4 border-b border-orange-50 pb-3">Most Borrowed Books</h3>
+            <div class="flex justify-between items-center mb-4 border-b border-orange-50 pb-3">
+                <h3 class="text-sm font-black text-gray-800 uppercase tracking-widest">Most Borrowed Books</h3>
+                <span class="timeframe-badge text-[10px] bg-orange-100 text-orange-700 font-black uppercase tracking-wider px-3 py-1 rounded-full">This Month</span>
+            </div>
             <div class="overflow-x-auto rounded-lg border border-orange-100">
                 <table class="w-full text-xs border-collapse">
                     <thead class="bg-orange-50 text-orange-700">

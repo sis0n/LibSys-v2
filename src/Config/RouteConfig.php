@@ -101,6 +101,8 @@ class RouteConfig
     $router->get('api/librarian/reports/deleted-books', 'ReportController@getDeletedBooks', ['reports']);
     $router->get('api/librarian/reports/library-visits-department', 'ReportController@getLibraryVisitsByDepartment', ['reports']);
     $router->get('api/librarian/reports/getGraphData', 'ReportController@getReportGraphData', ['reports']);
+    $router->get('api/librarian/reports/getActivityReport', 'ReportController@getActivityReport', ['reports']);
+    $router->get('api/librarian/reports/getGraphData', 'ReportController@getReportGraphData', ['reports']);
     $router->get('api/librarian/borrowingForm/manualBorrow', 'ManualBorrowingController@manualBorrow', ['borrowing form']);
     $router->post('api/librarian/borrowingForm/checkUser', 'ManualBorrowingController@checkUser', ['borrowing form']);
     $router->post('api/librarian/borrowingForm/create', 'ManualBorrowingController@create', ['borrowing form']);
@@ -147,6 +149,8 @@ class RouteConfig
     $router->get('api/admin/reports/most-borrowed-books', 'ReportController@getMostBorrowedBooks', ['reports']);
     $router->get('api/admin/reports/deleted-books', 'ReportController@getDeletedBooks', ['reports']);
     $router->get('api/admin/reports/library-visits-department', 'ReportController@getLibraryVisitsByDepartment', ['reports']);
+    $router->get('api/admin/reports/getGraphData', 'ReportController@getReportGraphData', ['reports']);
+    $router->get('api/admin/reports/getActivityReport', 'ReportController@getActivityReport', ['reports']);
     $router->get('api/admin/reports/getGraphData', 'ReportController@getReportGraphData', ['reports']);
     $router->get('api/admin/userManagement/pagination', 'UserManagementController@fetchPaginatedUsers', ['user management']);
     $router->get('api/admin/userManagement/get/{id}', 'UserManagementController@getUserById', ['user management']);
@@ -229,6 +233,8 @@ class RouteConfig
     $router->get('api/superadmin/reports/most-borrowed-books', 'ReportController@getMostBorrowedBooks', ['superadmin', 'reports']);
     $router->get('api/superadmin/reports/deleted-books', 'ReportController@getDeletedBooks', ['superadmin', 'reports']);
     $router->get('api/superadmin/reports/library-visits-department', 'ReportController@getLibraryVisitsByDepartment', ['superadmin', 'reports']);
+    $router->get('api/superadmin/reports/getActivityReport', 'ReportController@getActivityReport', ['superadmin', 'reports']);
+    $router->get('api/superadmin/reports/getReportGraphData', 'ReportController@getReportGraphData', ['superadmin', 'reports']);
     $router->get('api/superadmin/myProfile/get', 'SuperAdminProfileController@getProfile', ['superadmin']);
     $router->post('api/superadmin/myProfile/update', 'SuperAdminProfileController@updateProfile', ['superadmin']);
     $router->post('api/superadmin/returning/sendOverdueEmail', 'ReturningController@sendOverdueEmail', ['superadmin']);

@@ -15,45 +15,58 @@ class ReportRepository
         $this->db = Database::getInstance()->getConnection();
     }
 
-    public function getCirculatedBooksSummary()
+    public function getCirculatedBooksSummary(string $filter = 'month')
     {
         try {
+            $whereClause = "";
+            if ($filter === 'day') {
+                $whereClause = "AND DATE(bt.borrowed_at) = CURDATE()";
+            } elseif ($filter === 'month') {
+                $whereClause = "AND MONTH(bt.borrowed_at) = MONTH(CURDATE()) AND YEAR(bt.borrowed_at) = YEAR(CURDATE())";
+            } else { // year
+                $whereClause = "AND YEAR(bt.borrowed_at) = YEAR(CURDATE())";
+            }
+
             $sql = "
                 SELECT
                     'Student' AS category,
                     COUNT(CASE WHEN DATE(bt.borrowed_at) = CURDATE() THEN bti.item_id END) AS today,
                     COUNT(CASE WHEN YEARWEEK(bt.borrowed_at, 1) = YEARWEEK(CURDATE(), 1) THEN bti.item_id END) AS week,
                     COUNT(CASE WHEN YEAR(bt.borrowed_at) = YEAR(CURDATE()) AND MONTH(bt.borrowed_at) = MONTH(CURDATE()) THEN bti.item_id END) AS month,
-                    COUNT(CASE WHEN YEAR(bt.borrowed_at) = YEAR(CURDATE()) THEN bti.item_id END) AS year
+                    COUNT(CASE WHEN YEAR(bt.borrowed_at) = YEAR(CURDATE()) THEN bti.item_id END) AS year,
+                    COUNT(bti.item_id) AS filtered_count
                 FROM borrow_transactions bt JOIN borrow_transaction_items bti ON bt.transaction_id = bti.transaction_id
-                WHERE bt.student_id IS NOT NULL AND bti.status IN ('borrowed', 'returned', 'overdue') AND bti.book_id IS NOT NULL
+                WHERE bt.student_id IS NOT NULL AND bti.status IN ('borrowed', 'returned', 'overdue') AND bti.book_id IS NOT NULL $whereClause
                 UNION ALL
                 SELECT
                     'Faculty' AS category,
                     COUNT(CASE WHEN DATE(bt.borrowed_at) = CURDATE() THEN bti.item_id END) AS today,
                     COUNT(CASE WHEN YEARWEEK(bt.borrowed_at, 1) = YEARWEEK(CURDATE(), 1) THEN bti.item_id END) AS week,
                     COUNT(CASE WHEN YEAR(bt.borrowed_at) = YEAR(CURDATE()) AND MONTH(bt.borrowed_at) = MONTH(CURDATE()) THEN bti.item_id END) AS month,
-                    COUNT(CASE WHEN YEAR(bt.borrowed_at) = YEAR(CURDATE()) THEN bti.item_id END) AS year
+                    COUNT(CASE WHEN YEAR(bt.borrowed_at) = YEAR(CURDATE()) THEN bti.item_id END) AS year,
+                    COUNT(bti.item_id) AS filtered_count
                 FROM borrow_transactions bt JOIN borrow_transaction_items bti ON bt.transaction_id = bti.transaction_id
-                WHERE bt.faculty_id IS NOT NULL AND bti.status IN ('borrowed', 'returned', 'overdue') AND bti.book_id IS NOT NULL
+                WHERE bt.faculty_id IS NOT NULL AND bti.status IN ('borrowed', 'returned', 'overdue') AND bti.book_id IS NOT NULL $whereClause
                 UNION ALL
                 SELECT
                     'Staff' AS category,
                     COUNT(CASE WHEN DATE(bt.borrowed_at) = CURDATE() THEN bti.item_id END) AS today,
                     COUNT(CASE WHEN YEARWEEK(bt.borrowed_at, 1) = YEARWEEK(CURDATE(), 1) THEN bti.item_id END) AS week,
                     COUNT(CASE WHEN YEAR(bt.borrowed_at) = YEAR(CURDATE()) AND MONTH(bt.borrowed_at) = MONTH(CURDATE()) THEN bti.item_id END) AS month,
-                    COUNT(CASE WHEN YEAR(bt.borrowed_at) = YEAR(CURDATE()) THEN bti.item_id END) AS year
+                    COUNT(CASE WHEN YEAR(bt.borrowed_at) = YEAR(CURDATE()) THEN bti.item_id END) AS year,
+                    COUNT(bti.item_id) AS filtered_count
                 FROM borrow_transactions bt JOIN borrow_transaction_items bti ON bt.transaction_id = bti.transaction_id
-                WHERE bt.staff_id IS NOT NULL AND bti.status IN ('borrowed', 'returned', 'overdue') AND bti.book_id IS NOT NULL
+                WHERE bt.staff_id IS NOT NULL AND bti.status IN ('borrowed', 'returned', 'overdue') AND bti.book_id IS NOT NULL $whereClause
                 UNION ALL
                 SELECT
                     'TOTAL' AS category,
                     COUNT(CASE WHEN DATE(bt.borrowed_at) = CURDATE() THEN bti.item_id END) AS today,
                     COUNT(CASE WHEN YEARWEEK(bt.borrowed_at, 1) = YEARWEEK(CURDATE(), 1) THEN bti.item_id END) AS week,
                     COUNT(CASE WHEN YEAR(bt.borrowed_at) = YEAR(CURDATE()) AND MONTH(bt.borrowed_at) = MONTH(CURDATE()) THEN bti.item_id END) AS month,
-                    COUNT(CASE WHEN YEAR(bt.borrowed_at) = YEAR(CURDATE()) THEN bti.item_id END) AS year
+                    COUNT(CASE WHEN YEAR(bt.borrowed_at) = YEAR(CURDATE()) THEN bti.item_id END) AS year,
+                    COUNT(bti.item_id) AS filtered_count
                 FROM borrow_transactions bt JOIN borrow_transaction_items bti ON bt.transaction_id = bti.transaction_id
-                WHERE bti.status IN ('borrowed', 'returned', 'overdue') AND bti.book_id IS NOT NULL;
+                WHERE bti.status IN ('borrowed', 'returned', 'overdue') AND bti.book_id IS NOT NULL $whereClause;
             ";
             $stmt = $this->db->prepare($sql);
             $stmt->execute();
@@ -64,45 +77,58 @@ class ReportRepository
         }
     }
 
-    public function getCirculatedEquipmentsSummary()
+    public function getCirculatedEquipmentsSummary(string $filter = 'month')
     {
         try {
+            $whereClause = "";
+            if ($filter === 'day') {
+                $whereClause = "AND DATE(bt.borrowed_at) = CURDATE()";
+            } elseif ($filter === 'month') {
+                $whereClause = "AND MONTH(bt.borrowed_at) = MONTH(CURDATE()) AND YEAR(bt.borrowed_at) = YEAR(CURDATE())";
+            } else { // year
+                $whereClause = "AND YEAR(bt.borrowed_at) = YEAR(CURDATE())";
+            }
+
             $sql = "
                 SELECT
                     'Student' AS category,
                     COUNT(CASE WHEN DATE(bt.borrowed_at) = CURDATE() THEN bti.item_id END) AS today,
                     COUNT(CASE WHEN YEARWEEK(bt.borrowed_at, 1) = YEARWEEK(CURDATE(), 1) THEN bti.item_id END) AS week,
                     COUNT(CASE WHEN YEAR(bt.borrowed_at) = YEAR(CURDATE()) AND MONTH(bt.borrowed_at) = MONTH(CURDATE()) THEN bti.item_id END) AS month,
-                    COUNT(CASE WHEN YEAR(bt.borrowed_at) = YEAR(CURDATE()) THEN bti.item_id END) AS year
+                    COUNT(CASE WHEN YEAR(bt.borrowed_at) = YEAR(CURDATE()) THEN bti.item_id END) AS year,
+                    COUNT(bti.item_id) AS filtered_count
                 FROM borrow_transactions bt JOIN borrow_transaction_items bti ON bt.transaction_id = bti.transaction_id
-                WHERE bt.student_id IS NOT NULL AND bti.status IN ('borrowed', 'returned', 'overdue') AND bti.equipment_id IS NOT NULL
+                WHERE bt.student_id IS NOT NULL AND bti.status IN ('borrowed', 'returned', 'overdue') AND bti.equipment_id IS NOT NULL $whereClause
                 UNION ALL
                 SELECT
                     'Faculty' AS category,
                     COUNT(CASE WHEN DATE(bt.borrowed_at) = CURDATE() THEN bti.item_id END) AS today,
                     COUNT(CASE WHEN YEARWEEK(bt.borrowed_at, 1) = YEARWEEK(CURDATE(), 1) THEN bti.item_id END) AS week,
                     COUNT(CASE WHEN YEAR(bt.borrowed_at) = YEAR(CURDATE()) AND MONTH(bt.borrowed_at) = MONTH(CURDATE()) THEN bti.item_id END) AS month,
-                    COUNT(CASE WHEN YEAR(bt.borrowed_at) = YEAR(CURDATE()) THEN bti.item_id END) AS year
+                    COUNT(CASE WHEN YEAR(bt.borrowed_at) = YEAR(CURDATE()) THEN bti.item_id END) AS year,
+                    COUNT(bti.item_id) AS filtered_count
                 FROM borrow_transactions bt JOIN borrow_transaction_items bti ON bt.transaction_id = bti.transaction_id
-                WHERE bt.faculty_id IS NOT NULL AND bti.status IN ('borrowed', 'returned', 'overdue') AND bti.equipment_id IS NOT NULL
+                WHERE bt.faculty_id IS NOT NULL AND bti.status IN ('borrowed', 'returned', 'overdue') AND bti.equipment_id IS NOT NULL $whereClause
                 UNION ALL
                 SELECT
                     'Staff' AS category,
                     COUNT(CASE WHEN DATE(bt.borrowed_at) = CURDATE() THEN bti.item_id END) AS today,
                     COUNT(CASE WHEN YEARWEEK(bt.borrowed_at, 1) = YEARWEEK(CURDATE(), 1) THEN bti.item_id END) AS week,
                     COUNT(CASE WHEN YEAR(bt.borrowed_at) = YEAR(CURDATE()) AND MONTH(bt.borrowed_at) = MONTH(CURDATE()) THEN bti.item_id END) AS month,
-                    COUNT(CASE WHEN YEAR(bt.borrowed_at) = YEAR(CURDATE()) THEN bti.item_id END) AS year
+                    COUNT(CASE WHEN YEAR(bt.borrowed_at) = YEAR(CURDATE()) THEN bti.item_id END) AS year,
+                    COUNT(bti.item_id) AS filtered_count
                 FROM borrow_transactions bt JOIN borrow_transaction_items bti ON bt.transaction_id = bti.transaction_id
-                WHERE bt.staff_id IS NOT NULL AND bti.status IN ('borrowed', 'returned', 'overdue') AND bti.equipment_id IS NOT NULL
+                WHERE bt.staff_id IS NOT NULL AND bti.status IN ('borrowed', 'returned', 'overdue') AND bti.equipment_id IS NOT NULL $whereClause
                 UNION ALL
                 SELECT
                     'TOTAL' AS category,
                     COUNT(CASE WHEN DATE(bt.borrowed_at) = CURDATE() THEN bti.item_id END) AS today,
                     COUNT(CASE WHEN YEARWEEK(bt.borrowed_at, 1) = YEARWEEK(CURDATE(), 1) THEN bti.item_id END) AS week,
                     COUNT(CASE WHEN YEAR(bt.borrowed_at) = YEAR(CURDATE()) AND MONTH(bt.borrowed_at) = MONTH(CURDATE()) THEN bti.item_id END) AS month,
-                    COUNT(CASE WHEN YEAR(bt.borrowed_at) = YEAR(CURDATE()) THEN bti.item_id END) AS year
+                    COUNT(CASE WHEN YEAR(bt.borrowed_at) = YEAR(CURDATE()) THEN bti.item_id END) AS year,
+                    COUNT(bti.item_id) AS filtered_count
                 FROM borrow_transactions bt JOIN borrow_transaction_items bti ON bt.transaction_id = bti.transaction_id
-                WHERE bti.status IN ('borrowed', 'returned', 'overdue') AND bti.equipment_id IS NOT NULL;
+                WHERE bti.status IN ('borrowed', 'returned', 'overdue') AND bti.equipment_id IS NOT NULL $whereClause;
             ";
             $stmt = $this->db->prepare($sql);
             $stmt->execute();
@@ -186,9 +212,18 @@ class ReportRepository
         }
     }
 
-    public function getMostBorrowedBooks()
+    public function getMostBorrowedBooks(string $filter = 'month')
     {
         try {
+            $whereClause = "WHERE bti.book_id IS NOT NULL";
+            if ($filter === 'day') {
+                $whereClause .= " AND DATE(bt.borrowed_at) = CURDATE()";
+            } elseif ($filter === 'month') {
+                $whereClause .= " AND MONTH(bt.borrowed_at) = MONTH(CURDATE()) AND YEAR(bt.borrowed_at) = YEAR(CURDATE())";
+            } else { // year
+                $whereClause .= " AND YEAR(bt.borrowed_at) = YEAR(CURDATE())";
+            }
+
             $sql = "
                 SELECT 
                     b.title,
@@ -197,7 +232,8 @@ class ReportRepository
                     COUNT(bti.item_id) AS borrow_count
                 FROM borrow_transaction_items bti
                 JOIN books b ON bti.book_id = b.book_id
-                WHERE bti.book_id IS NOT NULL
+                JOIN borrow_transactions bt ON bti.transaction_id = bt.transaction_id
+                $whereClause
                 GROUP BY b.book_id, b.title, b.author, b.accession_number
                 ORDER BY borrow_count DESC
                 LIMIT 10;
@@ -211,9 +247,18 @@ class ReportRepository
         }
     }
 
-    public function getLibraryVisitsByDepartment()
+    public function getLibraryVisitsByDepartment(string $filter = 'month')
     {
         try {
+            $whereClause = "";
+            if ($filter === 'day') {
+                $whereClause = "WHERE DATE(a.date) = CURDATE()";
+            } elseif ($filter === 'month') {
+                $whereClause = "WHERE MONTH(a.date) = MONTH(CURDATE()) AND YEAR(a.date) = YEAR(CURDATE())";
+            } else { // year
+                $whereClause = "WHERE YEAR(a.date) = YEAR(CURDATE())";
+            }
+
             $sql = "
                 WITH DepartmentVisits AS (
                     SELECT
@@ -221,11 +266,12 @@ class ReportRepository
                         COUNT(CASE WHEN DATE(a.date) = CURDATE() THEN a.id END) AS today,
                         COUNT(CASE WHEN a.date >= CURDATE() - INTERVAL 6 DAY THEN a.id END) AS week,
                         COUNT(CASE WHEN MONTH(a.date) = MONTH(CURDATE()) AND YEAR(a.date) = YEAR(CURDATE()) THEN a.id END) AS month,
-                        COUNT(CASE WHEN YEAR(a.date) = YEAR(CURDATE()) THEN a.id END) AS year
+                        COUNT(CASE WHEN YEAR(a.date) = YEAR(CURDATE()) THEN a.id END) AS year,
+                        COUNT(a.id) AS filtered_count
                     FROM colleges cl
                     LEFT JOIN courses c ON cl.college_id = c.college_id
                     LEFT JOIN students s ON c.course_id = s.course_id
-                    LEFT JOIN attendance a ON s.user_id = a.user_id
+                    LEFT JOIN attendance a ON s.user_id = a.user_id AND $whereClause
                     GROUP BY cl.college_name
                 )
                 SELECT * FROM DepartmentVisits
@@ -235,7 +281,8 @@ class ReportRepository
                     SUM(today) AS today,
                     SUM(week) AS week,
                     SUM(month) AS month,
-                    SUM(year) AS year
+                    SUM(year) AS year,
+                    SUM(filtered_count) AS filtered_count
                 FROM DepartmentVisits;
             ";
             $stmt = $this->db->prepare($sql);
@@ -247,17 +294,26 @@ class ReportRepository
         }
     }
 
-    public function getDeletedBooksReport()
+    public function getDeletedBooksReport(string $filter = 'month')
     {
         try {
+            $whereClause = "";
+            if ($filter === 'day') {
+                $whereClause = "AND DATE(deleted_at) = CURDATE()";
+            } elseif ($filter === 'month') {
+                $whereClause = "AND MONTH(deleted_at) = MONTH(CURDATE()) AND YEAR(deleted_at) = YEAR(CURDATE())";
+            } else { // year
+                $whereClause = "AND YEAR(deleted_at) = YEAR(CURDATE())";
+            }
+
             $sql = "
                 SELECT
                     YEAR(deleted_at) as year,
                     SUM(CASE WHEN MONTH(deleted_at) = MONTH(CURDATE()) AND YEAR(deleted_at) = YEAR(CURDATE()) THEN 1 ELSE 0 END) as month,
                     SUM(CASE WHEN DATE(deleted_at) = CURDATE() THEN 1 ELSE 0 END) as today,
-                    COUNT(*) as count
+                    COUNT(*) as filtered_count
                 FROM books
-                WHERE deleted_at IS NOT NULL
+                WHERE deleted_at IS NOT NULL $whereClause
                 GROUP BY YEAR(deleted_at)
             ";
             $stmt = $this->db->prepare($sql);
@@ -488,22 +544,56 @@ class ReportRepository
         }, $rows);
     }
 
-    public function getWeeklyActivity(): array
+    public function getActivityReport(string $filter = 'month'): array
     {
         $data = [];
-        for ($i = 6; $i >= 0; $i--) {
-        $date = date('Y-m-d', strtotime("-$i days"));
-        $day = date('D', strtotime($date));
+        if ($filter === 'day') {
+            // Group by hour for today
+            for ($i = 0; $i < 24; $i++) {
+                $hour = str_pad($i, 2, '0', STR_PAD_LEFT);
+                $label = $hour . ":00";
+                
+                $stmt = $this->db->prepare("SELECT COUNT(DISTINCT user_id) FROM attendance WHERE DATE(first_scan_at) = CURDATE() AND HOUR(first_scan_at) = :hour");
+                $stmt->execute(['hour' => $i]);
+                $visitors = (int) $stmt->fetchColumn();
 
-        $stmt = $this->db->prepare("SELECT COUNT(DISTINCT user_id) FROM attendance WHERE DATE(first_scan_at) = :date");
-        $stmt->execute(['date' => $date]);
-        $visitors = (int) $stmt->fetchColumn();
+                $stmt = $this->db->prepare("SELECT COUNT(*) FROM borrow_transactions WHERE DATE(borrowed_at) = CURDATE() AND HOUR(borrowed_at) = :hour");
+                $stmt->execute(['hour' => $i]);
+                $borrows = (int) $stmt->fetchColumn();
 
-        $stmt = $this->db->prepare("SELECT COUNT(*) FROM borrow_transactions WHERE DATE(borrowed_at) = :date");
-        $stmt->execute(['date' => $date]);
-        $borrows = (int) $stmt->fetchColumn();
+                $data[] = ['label' => $label, 'visitors' => $visitors, 'borrows' => $borrows];
+            }
+        } elseif ($filter === 'year') {
+            // Group by month for this year
+            for ($i = 1; $i <= 12; $i++) {
+                $label = date('M', mktime(0, 0, 0, $i, 1));
+                
+                $stmt = $this->db->prepare("SELECT COUNT(DISTINCT user_id) FROM attendance WHERE YEAR(first_scan_at) = YEAR(CURDATE()) AND MONTH(first_scan_at) = :month");
+                $stmt->execute(['month' => $i]);
+                $visitors = (int) $stmt->fetchColumn();
 
-        $data[] = ['day' => $day, 'visitors' => $visitors, 'borrows' => $borrows];
+                $stmt = $this->db->prepare("SELECT COUNT(*) FROM borrow_transactions WHERE YEAR(borrowed_at) = YEAR(CURDATE()) AND MONTH(borrowed_at) = :month");
+                $stmt->execute(['month' => $i]);
+                $borrows = (int) $stmt->fetchColumn();
+
+                $data[] = ['label' => $label, 'visitors' => $visitors, 'borrows' => $borrows];
+            }
+        } else {
+            // Default: Group by day for this month (last 30 days)
+            for ($i = 29; $i >= 0; $i--) {
+                $date = date('Y-m-d', strtotime("-$i days"));
+                $label = date('M d', strtotime($date));
+
+                $stmt = $this->db->prepare("SELECT COUNT(DISTINCT user_id) FROM attendance WHERE DATE(first_scan_at) = :date");
+                $stmt->execute(['date' => $date]);
+                $visitors = (int) $stmt->fetchColumn();
+
+                $stmt = $this->db->prepare("SELECT COUNT(*) FROM borrow_transactions WHERE DATE(borrowed_at) = :date");
+                $stmt->execute(['date' => $date]);
+                $borrows = (int) $stmt->fetchColumn();
+
+                $data[] = ['label' => $label, 'visitors' => $visitors, 'borrows' => $borrows];
+            }
         }
 
         return $data;
