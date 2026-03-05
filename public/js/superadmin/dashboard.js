@@ -3,6 +3,11 @@ document.addEventListener('DOMContentLoaded', function () {
   const dailyVisitorsEl = document.getElementById('dailyVisitors');
   const availableBooksEl = document.getElementById('activeBooks'); 
   const borrowedBooksEl = document.getElementById('borrowedBooks');
+  
+  const totalStudentsEl = document.getElementById('totalStudents');
+  const totalFacultyEl = document.getElementById('totalFaculty');
+  const totalStaffEl = document.getElementById('totalStaff');
+
   const topVisitorsTableBody = document.getElementById('topVisitorsTableBody');
   const popularBooksTableBody = document.getElementById('popularBooksTableBody');
   const recentActivitiesTableBody = document.getElementById('recentActivitiesTableBody');
@@ -22,6 +27,11 @@ document.addEventListener('DOMContentLoaded', function () {
         if (dailyVisitorsEl) dailyVisitorsEl.textContent = data.attendance_today;
         if (availableBooksEl) availableBooksEl.textContent = data.availableBooks;
         if (borrowedBooksEl) borrowedBooksEl.textContent = data.borrowed_books;
+
+        // Populate breakdown counters
+        if (totalStudentsEl) totalStudentsEl.textContent = data.students;
+        if (totalFacultyEl) totalFacultyEl.textContent = data.faculty;
+        if (totalStaffEl) totalStaffEl.textContent = data.staff;
 
         const totalUsersSub = document.querySelector("#totalUsers + p");
         if (totalUsersSub) totalUsersSub.textContent = `+${data.usersAddedThisMonth} this month`;

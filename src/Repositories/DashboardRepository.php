@@ -27,10 +27,10 @@ class DashboardRepository
       $stmt = $this->db->query("SELECT COUNT(*) AS total_students FROM students WHERE status='enrolled' AND deleted_at IS NULL");
       $totalStudents = (int) ($stmt->fetch(PDO::FETCH_ASSOC)['total_students'] ?? 0);
 
-      $stmt = $this->db->query("SELECT COUNT(*) AS total_staff FROM staff WHERE status='active' AND deleted_at IS NULL");
+      $stmt = $this->db->query("SELECT COUNT(*) AS total_staff FROM staff WHERE deleted_at IS NULL");
       $totalStaff = (int) ($stmt->fetch(PDO::FETCH_ASSOC)['total_staff'] ?? 0);
 
-      $stmt = $this->db->query("SELECT COUNT(*) AS total_faculty FROM faculty WHERE status='active' AND deleted_at IS NULL");
+      $stmt = $this->db->query("SELECT COUNT(*) AS total_faculty FROM faculty WHERE deleted_at IS NULL");
       $totalFaculty = (int) ($stmt->fetch(PDO::FETCH_ASSOC)['total_faculty'] ?? 0);
 
       $totalUsers = $totalStudents + $totalFaculty + $totalStaff;

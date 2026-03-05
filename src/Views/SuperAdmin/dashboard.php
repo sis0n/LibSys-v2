@@ -44,9 +44,9 @@ $fullName = $_SESSION['user_data']['fullname'] ?? $_SESSION['role'] ?? 'Admin';
     <?php
     $cards = [
       ['id' => 'totalUsers', 'title' => 'Total Users', 'icon' => 'ph-user', 'color' => 'orange', 'subtitle' => '+0 this month'],
-      ['id' => 'dailyVisitors', 'title' => 'Daily Visitors', 'icon' => 'ph-users-three', 'color' => 'blue', 'subtitle' => 'Today'],
+      ['id' => 'dailyVisitors', 'title' => 'Daily Visitors', 'icon' => 'ph-users-three', 'color' => 'green', 'subtitle' => 'Today'],
       ['id' => 'activeBooks', 'title' => 'Available Books', 'icon' => 'ph-book', 'color' => 'orange', 'subtitle' => '0% available'],
-      ['id' => 'borrowedBooks', 'title' => 'Borrowed Books', 'icon' => 'ph-books', 'color' => 'blue', 'subtitle' => '0% of total books'],
+      ['id' => 'borrowedBooks', 'title' => 'Borrowed Books', 'icon' => 'ph-books', 'color' => 'green', 'subtitle' => '0% of total books'],
     ];
     foreach ($cards as $c):
     ?>
@@ -58,6 +58,28 @@ $fullName = $_SESSION['user_data']['fullname'] ?? $_SESSION['role'] ?? 'Admin';
         <div class="p-6 flex flex-col justify-between flex-grow">
           <h4 id="<?= $c['id'] ?>" class="text-3xl font-bold text-gray-900">0</h4>
           <p class="text-sm text-<?= $c['color'] ?>-600 mt-1"><?= $c['subtitle'] ?></p>
+        </div>
+      </div>
+    <?php endforeach; ?>
+  </section>
+
+  <!-- Role Breakdown (Feature #1) -->
+  <section class="grid grid-cols-1 sm:grid-cols-3 gap-6 text-left">
+    <?php
+    $breakdown = [
+      ['id' => 'totalStudents', 'title' => 'Students', 'icon' => 'ph-student', 'color' => 'orange'],
+      ['id' => 'totalFaculty', 'title' => 'Faculty', 'icon' => 'ph-chalkboard-teacher', 'color' => 'orange'],
+      ['id' => 'totalStaff', 'title' => 'Staff', 'icon' => 'ph-identification-card', 'color' => 'orange'],
+    ];
+    foreach ($breakdown as $b):
+    ?>
+      <div class="flex items-center gap-4 rounded-xl shadow-sm bg-white border border-<?= $b['color'] ?>-100 p-4 hover:shadow-md transition-shadow">
+        <div class="bg-<?= $b['color'] ?>-50 p-3 rounded-lg">
+          <i class="ph <?= $b['icon'] ?> text-<?= $b['color'] ?>-500 text-2xl"></i>
+        </div>
+        <div>
+          <p class="text-[10px] font-black text-gray-400 uppercase tracking-widest"><?= $b['title'] ?></p>
+          <h4 id="<?= $b['id'] ?>" class="text-xl font-black text-gray-800">0</h4>
         </div>
       </div>
     <?php endforeach; ?>
