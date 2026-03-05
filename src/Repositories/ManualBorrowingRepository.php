@@ -223,27 +223,14 @@ class ManualBorrowingRepository
       }
 
       if ($isEquipment) {
-        $identifier = $borrowData['equipment_id'];
-        $actualEquipmentId = null;
-        if (is_numeric($identifier)) {
-          $stmtCheck = $this->db->prepare("SELECT equipment_id, status FROM equipments WHERE equipment_id = ? AND is_active = 1");
-          $stmtCheck->execute([$identifier]);
-          $eq = $stmtCheck->fetch(PDO::FETCH_ASSOC);
-          if (!$eq || $eq['status'] !== 'available') throw new Exception("Equipment not available.");
-          $actualEquipmentId = $eq['equipment_id'];
-        } else {
-          $stmtFind = $this->db->prepare("SELECT equipment_id, status FROM equipments WHERE (asset_tag = ? OR equipment_name = ?) AND is_active = 1 LIMIT 1");
-          $stmtFind->execute([$identifier, $identifier]);
-          $existing = $stmtFind->fetch(PDO::FETCH_ASSOC);
-          if ($existing) {
-            if ($existing['status'] !== 'available') throw new Exception("Equipment not available.");
-            $actualEquipmentId = $existing['equipment_id'];
-          } else {
-            $stmtCreate = $this->db->prepare("INSERT INTO equipments (equipment_name, asset_tag, status, is_active, created_at) VALUES (?, ?, 'borrowed', 1, NOW())");
-            $stmtCreate->execute([$identifier, $identifier]);
-            $actualEquipmentId = $this->db->lastInsertId();
-          }
-        }
+        $actualEquipmentId = (int)$borrowData['equipment_id'];
+        $stmtCheck = $this->db->prepare("SELECT equipment_id, status FROM equipments WHERE equipment_id = ? AND is_active = 1");
+        $stmtCheck->execute([$actualEquipmentId]);
+        $eq = $stmtCheck->fetch(PDO::FETCH_ASSOC);
+        
+        if (!$eq) throw new Exception("Equipment not found in inventory.");
+        if ($eq['status'] !== 'available') throw new Exception("Equipment is currently not available.");
+
         $stmt = $this->db->prepare("INSERT INTO borrow_transaction_items (transaction_id, equipment_id, status) VALUES (?, ?, 'borrowed')");
         $stmt->execute([$transactionId, $actualEquipmentId]);
         $this->db->prepare("UPDATE equipments SET status = 'borrowed', updated_at = NOW() WHERE equipment_id = ?")->execute([$actualEquipmentId]);

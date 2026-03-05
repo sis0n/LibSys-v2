@@ -107,38 +107,36 @@ document.addEventListener('DOMContentLoaded', () => {
   setupDropdown('itemTypeDropdownBtn', 'itemTypeDropdownMenu', 'itemTypeDropdownValue', 'item_type', 'item-type-item', handleItemTypeChange);
   setupDropdown('roleDropdownBtn', 'roleDropdownMenu', 'roleDropdownValue', 'role', 'role-item');
 
-  const populateCollaterals = async () => {
-    const list = document.getElementById('collateral-list');
-    const hiddenInput = document.getElementById('collateral_id_hidden');
-    const valueDisplay = document.getElementById('collateralDropdownValue');
-    const menu = document.getElementById('collateralDropdownMenu');
-    const btn = document.getElementById('collateralDropdownBtn');
+  const fetchData = async (url, listId, valueId, hiddenId, menuId, btnId, itemClass, idKey, nameKey) => {
+    const list = document.getElementById(listId);
+    const hiddenInput = document.getElementById(hiddenId);
+    const valueDisplay = document.getElementById(valueId);
+    const menu = document.getElementById(menuId);
+    const btn = document.getElementById(btnId);
 
     if (!list || !btn) return;
 
-    btn.addEventListener('click', (e) => {
-        e.preventDefault(); e.stopPropagation();
-        menu.classList.toggle('hidden');
-    });
+    btn.addEventListener('click', (e) => { e.preventDefault(); e.stopPropagation(); menu.classList.toggle('hidden'); });
 
     try {
-        const res = await fetch(`${BASE_URL}/api/librarian/borrowingForm/getCollaterals`);
+        const res = await fetch(`${BASE_URL}/${url}`);
         const data = await res.json();
         list.innerHTML = "";
         data.forEach(item => {
             const li = document.createElement('li');
-            li.innerHTML = `<button type="button" class="collateral-item w-full text-left px-4 py-2 text-sm hover:bg-amber-50" data-id="${item.collateral_id}">${item.name}</button>`;
+            li.innerHTML = `<button type="button" class="${itemClass} w-full text-left px-4 py-2 text-sm hover:bg-amber-50" data-id="${item[idKey]}">${item[nameKey]}</button>`;
             li.addEventListener('click', () => {
-                valueDisplay.textContent = item.name;
-                hiddenInput.value = item.collateral_id;
+                valueDisplay.textContent = item[nameKey];
+                hiddenInput.value = item[idKey];
                 menu.classList.add('hidden');
             });
             list.appendChild(li);
         });
-    } catch (err) { console.error("Collateral fetch failed:", err); }
+    } catch (err) { console.error("Fetch failed:", err); }
   };
 
-  populateCollaterals();
+  fetchData('api/librarian/borrowingForm/getCollaterals', 'collateral-list', 'collateralDropdownValue', 'collateral_id_hidden', 'collateralDropdownMenu', 'collateralDropdownBtn', 'collateral-item', 'collateral_id', 'name');
+  fetchData('api/librarian/borrowingForm/getEquipments', 'equipment-list', 'equipmentDropdownValue', 'equipment_id_hidden', 'equipmentDropdownMenu', 'equipmentDropdownBtn', 'equipment-item', 'equipment_id', 'equipment_name');
 
   document.getElementById('clear-btn').addEventListener('click', () => {
     const form = document.getElementById('main-borrow-form');
@@ -146,9 +144,11 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('roleDropdownValue').textContent = 'Select Role';
     document.getElementById('itemTypeDropdownValue').textContent = 'Equipment';
     document.getElementById('collateralDropdownValue').textContent = 'Select Collateral';
+    document.getElementById('equipmentDropdownValue').textContent = 'Select Equipment';
     document.getElementById('role').value = '';
     document.getElementById('item_type').value = 'Equipment';
     document.getElementById('collateral_id_hidden').value = '';
+    document.getElementById('equipment_id_hidden').value = '';
     handleItemTypeChange('Equipment');
     showSuccessToast('Form Cleared', 'Borrower and Item fields have been reset.');
   });
@@ -185,9 +185,10 @@ document.addEventListener('DOMContentLoaded', () => {
     e.preventDefault();
     const form = e.target;
     const formData = new FormData(form);
-    const collateralHidden = document.getElementById('collateral_id_hidden').value;
-    if (!collateralHidden) return showErrorToast('Invalid Collateral', 'Mangyaring pumili ng collateral mula sa listahan.');
     
+    if (!document.getElementById('collateral_id_hidden').value) return showErrorToast('Invalid Collateral', 'Mangyaring pumili ng collateral mula sa listahan.');
+    if (formData.get('item_type') === 'Equipment' && !document.getElementById('equipment_id_hidden').value) return showErrorToast('Invalid Equipment', 'Mangyaring pumili ng kagamitan mula sa listahan.');
+
     showLoadingModal('Submitting...', 'Processing transaction.');
     if (!formData.get('role')) formData.set('role', '');
     if (!formData.get('equipment_type')) formData.set('equipment_type', formData.get('item_type'));
@@ -200,48 +201,9 @@ document.addEventListener('DOMContentLoaded', () => {
     } catch { Swal.close(); showErrorToast('Error', 'Submission failed.'); }
   });
 
-  const setupCombobox = (inputId, suggestionsId, listId, arrowId, fetchUrl, hiddenInputId) => {
-    const input = document.getElementById(inputId);
-    const container = document.getElementById(suggestionsId);
-    const list = document.getElementById(listId);
-    const arrow = document.getElementById(arrowId);
-    const hiddenInput = document.getElementById(hiddenInputId);
-    if (!input || !container || !list || !arrow || !hiddenInput) return;
-
-    let itemsData = [];
-
-    (async () => {
-      try {
-        const res = await fetch(`${BASE_URL}/${fetchUrl}`);
-        itemsData = await res.json();
-      } catch (err) { console.error("Fetch failed:", err); }
-    })();
-
-    const render = (filter = "") => {
-      list.innerHTML = "";
-      const filtered = itemsData.filter(i => (i.equipment_name || "").toLowerCase().includes(filter.toLowerCase()));
-      if (filtered.length === 0) { container.classList.add('hidden'); return; }
-      filtered.forEach(item => {
-        const li = document.createElement('li');
-        li.className = "px-4 py-2 text-sm cursor-pointer hover:bg-orange-50 transition-colors";
-        const name = item.equipment_name || "";
-        const id = item.equipment_id || "";
-        li.textContent = name;
-        li.addEventListener('click', () => {
-          input.value = name;
-          hiddenInput.value = id;
-          container.classList.add('hidden');
-        });
-        list.appendChild(li);
-      });
-      container.classList.remove('hidden');
-    };
-
-    input.addEventListener('input', (e) => { hiddenInput.value = ""; render(e.target.value); });
-    input.addEventListener('focus', () => render(input.value));
-    arrow.addEventListener('click', (e) => { e.stopPropagation(); container.classList.contains('hidden') ? render(input.value) : container.classList.add('hidden'); });
-    document.addEventListener('click', (e) => { if (!input.contains(e.target) && !arrow.contains(e.target)) container.classList.add('hidden'); });
-  };
-
-  setupCombobox('item_name', 'item_name_suggestions', 'item_name_suggestions_list', 'item_name_dropdown_arrow', 'api/librarian/borrowingForm/getEquipments', 'equipment_id_hidden');
+  document.addEventListener('click', (e) => {
+    document.querySelectorAll('.absolute.z-10, .absolute.z-20').forEach(menu => {
+      if (!menu.contains(e.target)) menu.classList.add('hidden');
+    });
+  });
 });
