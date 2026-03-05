@@ -37,8 +37,6 @@ class ManualBorrowingController extends Controller
     }
   }
 
-
-
   private function sendJson(array $data, int $statusCode = 200): void
   {
     http_response_code($statusCode);
@@ -47,7 +45,6 @@ class ManualBorrowingController extends Controller
     exit;
   }
 
-  // --- Check if user exists ---
   public function checkUser(): void
   {
     $input_user_id = $_POST['input_user_id'] ?? null;
@@ -64,7 +61,6 @@ class ManualBorrowingController extends Controller
     }
   }
 
-  // --- Create manual borrow ---
   public function create(): void
   {
     try {
@@ -77,14 +73,13 @@ class ManualBorrowingController extends Controller
         'role'             => $_POST['role'] ?? null,
         'email'            => $_POST['email'] ?? null,
         'contact'          => $_POST['contact'] ?? null,
-        'collateral_id'    => $_POST['collateral_id'] ?? null,
+        'collateral_id'    => $_POST['collateral_id_hidden'] ?? null,
         'equipment_type'   => $_POST['equipment_type'] ?? null,
         'accession_number' => $_POST['accession_number'] ?? null,
         'equipment_name'   => $_POST['equipment_name'] ?? null,
-        'equipment_id'     => $_POST['equipment_id'] ?? null // Hidden ID from inventory
+        'equipment_id'     => $_POST['equipment_id'] ?? null
       ];
 
-      // --- Required field validation ---
       $required = ['first_name', 'last_name', 'role', 'collateral_id', 'equipment_type'];
       if ($data['equipment_type'] === 'Book') {
         $required[] = 'accession_number';
@@ -98,31 +93,15 @@ class ManualBorrowingController extends Controller
         }
       }
 
-      // --- Determine Item ID for repository ---
-      $itemId = null; 
-
-      if ($data['equipment_type'] === 'Book') {
-        $book = $this->manualRepo->checkBook($data['accession_number']);
-        if (!$book['exists']) {
-          $this->sendJson(['success' => false, 'message' => 'Book not found']);
-        }
-        if (!$book['available']) {
-          $this->sendJson(['success' => false, 'message' => 'Book is currently not available']);
-        }
-        $itemId = $book['details']['book_id'];
-      } else {
-        // PRIORITIZE: If an equipment_id was selected from inventory, use it.
-        // Otherwise, use the text name (which might trigger auto-create).
-        $itemId = !empty($data['equipment_id']) ? $data['equipment_id'] : $data['equipment_name']; 
-      }
-
-      // --- Check if user exists ---
       $existingRole = $this->manualRepo->checkIfUserExists($data['input_user_id']);
-
       $borrowerType = null;
       $borrowerId = null;
 
       if ($existingRole) {
+        $userInfo = $this->manualRepo->getUserInfo($data['input_user_id']);
+        if (empty($userInfo['profile_updated'])) {
+          $this->sendJson(['success' => false, 'message' => 'Profile incomplete. Borrower must update their profile first.']);
+        }
         $borrowerType = strtolower($existingRole);
         $borrowerId = $data['input_user_id'];
       } else {
@@ -135,7 +114,20 @@ class ManualBorrowingController extends Controller
         ]);
       }
 
-      // --- Create borrowing transaction ---
+      $itemId = null; 
+      if ($data['equipment_type'] === 'Book') {
+        $book = $this->manualRepo->checkBook($data['accession_number']);
+        if (!$book['exists']) {
+          $this->sendJson(['success' => false, 'message' => 'Book not found']);
+        }
+        if (!$book['available']) {
+          $this->sendJson(['success' => false, 'message' => 'Book is currently not available']);
+        }
+        $itemId = $book['details']['book_id'];
+      } else {
+        $itemId = !empty($data['equipment_id']) ? $data['equipment_id'] : $data['equipment_name']; 
+      }
+
       $borrowData = [
         'borrower_type' => $borrowerType,
         'borrower_id'   => $borrowerId,
@@ -146,7 +138,6 @@ class ManualBorrowingController extends Controller
       if ($data['equipment_type'] === 'Book') {
         $borrowData['book_id'] = $itemId;
       } else {
-        // For equipment, the itemId is the equipment_name, which the repository will use to find/create an equipment_id
         $borrowData['equipment_id'] = $itemId; 
       }
 

@@ -17,8 +17,6 @@
             </div>
 
             <div class="space-y-4">
-
-
                  <!-- Other Details -->
                 <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 pt-2">
                     <div>
@@ -31,7 +29,7 @@
                         <label for="role" class="block text-sm font-medium text-gray-700 mb-1">Role <span
                                 class="text-red-500">*</span></label>
                         <div class="relative">
-                            <input type="hidden" id="role" name="role" value="Select Role">
+                            <input type="hidden" id="role" name="role" value="">
                             <button type="button" id="roleDropdownBtn"
                                 class="w-full flex items-center justify-between px-4 py-2 rounded-lg border border-amber-300 bg-white text-left focus:ring-2 focus:ring-amber-500 outline-none transition text-sm">
                                 <span id="roleDropdownValue">Select Role</span>
@@ -40,18 +38,10 @@
                             <div id="roleDropdownMenu"
                                 class="absolute mt-1 w-full bg-white border border-gray-200 rounded-lg shadow-lg hidden z-20">
                                 <ul class="py-1">
-                                    <li><button type="button"
-                                            class="role-item w-full text-left px-4 py-2 text-sm hover:bg-amber-50"
-                                            data-value="Student">Student</button></li>
-                                    <li><button type="button"
-                                            class="role-item w-full text-left px-4 py-2 text-sm hover:bg-amber-50"
-                                            data-value="Staff">Staff</button></li>
-                                    <li><button type="button"
-                                            class="role-item w-full text-left px-4 py-2 text-sm hover:bg-amber-50"
-                                            data-value="Faculty">Faculty</button></li>
-                                    <li><button type="button"
-                                            class="role-item w-full text-left px-4 py-2 text-sm hover:bg-amber-50"
-                                            data-value="Guest">Guest</button></li>
+                                    <li><button type="button" class="role-item w-full text-left px-4 py-2 text-sm hover:bg-amber-50" data-value="Student">Student</button></li>
+                                    <li><button type="button" class="role-item w-full text-left px-4 py-2 text-sm hover:bg-amber-50" data-value="Staff">Staff</button></li>
+                                    <li><button type="button" class="role-item w-full text-left px-4 py-2 text-sm hover:bg-amber-50" data-value="Faculty">Faculty</button></li>
+                                    <li><button type="button" class="role-item w-full text-left px-4 py-2 text-sm hover:bg-amber-50" data-value="Guest">Guest</button></li>
                                 </ul>
                             </div>
                         </div>
@@ -60,16 +50,16 @@
                         <label for="collateral_id" class="block text-sm font-medium text-gray-700 mb-1">Collateral ID
                             <span class="text-red-500">*</span></label>
                         <div class="relative">
-                            <input type="text" id="collateral_id" name="collateral_id"
-                                placeholder="Library ID, School ID, Valid ID ..." autocomplete="off"
-                                class="w-full px-4 py-2 rounded-lg border border-amber-300 bg-white focus:ring-2 focus:ring-amber-500 outline-none transition text-sm pr-10">
-                            <button type="button" id="collateral_id_dropdown_arrow"
-                                class="absolute inset-y-0 right-0 flex items-center px-2 text-gray-700">
-                                <i class="ph ph-caret-down"></i>
+                            <input type="hidden" id="collateral_id_hidden" name="collateral_id_hidden">
+                            <button type="button" id="collateralDropdownBtn"
+                                class="w-full flex items-center justify-between px-4 py-2 rounded-lg border border-amber-300 bg-white text-left focus:ring-2 focus:ring-amber-500 outline-none transition text-sm">
+                                <span id="collateralDropdownValue">Select Collateral</span>
+                                <i class="ph ph-caret-down text-gray-500"></i>
                             </button>
-                            <div id="collateral_id_suggestions"
-                                class="absolute mt-1 w-full bg-white border border-gray-200 rounded-lg shadow-lg hidden z-10">
-                                <ul class="py-1" id="collateral_id_suggestions_list">
+                            <div id="collateralDropdownMenu"
+                                class="absolute mt-1 w-full bg-white border border-gray-200 rounded-lg shadow-lg hidden z-20 max-h-60 overflow-y-auto">
+                                <ul class="py-1" id="collateral-list">
+                                    <!-- Options populated via JS -->
                                 </ul>
                             </div>
                         </div>
@@ -84,8 +74,6 @@
                         <input type="text" id="email" name="email"
                             class="w-full px-4 py-2 rounded-lg border border-amber-300 bg-white focus:ring-2 focus:ring-amber-500 outline-none transition text-sm">
                     </div>
-                    
-                    
                 </div>
                 <!-- Name -->
                 <div>
@@ -114,11 +102,8 @@
                         </div>
                     </div>
                 </div>
-
-               
             </div>
         </div>
-
 
         <!-- Item Information Section -->
         <div class="bg-emerald-50 border border-emerald-200 rounded-xl p-6 mt-6">
@@ -144,12 +129,8 @@
                         <div id="itemTypeDropdownMenu"
                             class="absolute mt-1 w-full bg-white border border-gray-200 rounded-lg shadow-lg hidden z-10">
                             <ul class="py-1">
-                                <li><button type="button"
-                                        class="item-type-item w-full text-left px-4 py-2 text-sm hover:bg-emerald-50"
-                                        data-value="Equipment">Equipment</button></li>
-                                <li><button type="button"
-                                        class="item-type-item w-full text-left px-4 py-2 text-sm hover:bg-emerald-50"
-                                        data-value="Book">Book</button></li>
+                                <li><button type="button" class="item-type-item w-full text-left px-4 py-2 text-sm hover:bg-emerald-50" data-value="Equipment">Equipment</button></li>
+                                <li><button type="button" class="item-type-item w-full text-left px-4 py-2 text-sm hover:bg-emerald-50" data-value="Book">Book</button></li>
                             </ul>
                         </div>
                     </div>
@@ -174,8 +155,9 @@
                         class="block text-sm font-medium text-gray-700 mb-1">Equipment Name <span
                             class="text-red-500">*</span></label>
                     <div class="relative">
+                        <input type="hidden" id="equipment_id_hidden" name="equipment_id">
                         <input type="text" id="item_name" name="equipment_name" placeholder="Enter equipment name"
-                            autocomplete="off" autocorect="off" spellcheck="false"
+                            autocomplete="off"
                             class="w-full px-4 py-2 rounded-lg border border-emerald-300 bg-white focus:ring-2 focus:ring-emerald-500 outline-none transition text-sm pr-10">
                         <button type="button" id="item_name_dropdown_arrow"
                             class="absolute inset-y-0 right-0 flex items-center px-2 text-gray-700">
@@ -209,5 +191,8 @@
         </div>
     </form>
 
+    <script>
+        const BASE_URL = "<?= BASE_URL ?>";
+    </script>
     <script src="<?= BASE_URL ?>/js/librarian/borrowingForm.js" defer></script>
 </main>

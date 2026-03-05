@@ -17,30 +17,15 @@ class ManualBorrowingRepository
 
   public function checkIfUserExists(string $input_user_id): ?string
   {
-    $stmt = $this->db->prepare("
-            SELECT s.student_id
-            FROM students s
-            JOIN users u ON s.user_id = u.user_id
-            WHERE s.student_number = ? AND s.deleted_at IS NULL
-        ");
+    $stmt = $this->db->prepare("SELECT s.student_id FROM students s JOIN users u ON s.user_id = u.user_id WHERE s.student_number = ? AND s.deleted_at IS NULL");
     $stmt->execute([$input_user_id]);
     if ($stmt->fetch(PDO::FETCH_ASSOC)) return 'student';
 
-    $stmt = $this->db->prepare("
-            SELECT f.faculty_id
-            FROM faculty f
-            JOIN users u ON f.user_id = u.user_id
-            WHERE f.unique_faculty_id = ? AND f.deleted_at IS NULL
-        ");
+    $stmt = $this->db->prepare("SELECT f.faculty_id FROM faculty f JOIN users u ON f.user_id = u.user_id WHERE f.unique_faculty_id = ? AND f.deleted_at IS NULL");
     $stmt->execute([$input_user_id]);
     if ($stmt->fetch(PDO::FETCH_ASSOC)) return 'faculty';
 
-    $stmt = $this->db->prepare("
-            SELECT st.staff_id
-            FROM staff st
-            JOIN users u ON st.user_id = u.user_id
-            WHERE st.employee_id = ? AND st.deleted_at IS NULL
-        ");
+    $stmt = $this->db->prepare("SELECT st.staff_id FROM staff st JOIN users u ON st.user_id = u.user_id WHERE st.employee_id = ? AND st.deleted_at IS NULL");
     $stmt->execute([$input_user_id]);
     if ($stmt->fetch(PDO::FETCH_ASSOC)) return 'staff';
 
@@ -87,30 +72,15 @@ class ManualBorrowingRepository
 
   public function getUserInfo(string $input_user_id): ?array
   {
-    $stmt = $this->db->prepare("
-            SELECT u.first_name, u.middle_name, u.last_name, u.suffix, u.email, s.contact, 'student' AS role
-            FROM students s
-            JOIN users u ON s.user_id = u.user_id
-            WHERE s.student_number = ? AND s.deleted_at IS NULL
-        ");
+    $stmt = $this->db->prepare("SELECT u.first_name, u.middle_name, u.last_name, u.suffix, u.email, s.contact, s.profile_updated, 'student' AS role FROM students s JOIN users u ON s.user_id = u.user_id WHERE s.student_number = ? AND s.deleted_at IS NULL");
     $stmt->execute([$input_user_id]);
     if ($data = $stmt->fetch(PDO::FETCH_ASSOC)) return $data;
 
-    $stmt = $this->db->prepare("
-            SELECT u.first_name, u.middle_name, u.last_name, u.suffix, u.email, f.contact, 'faculty' AS role
-            FROM faculty f
-            JOIN users u ON f.user_id = u.user_id
-            WHERE f.unique_faculty_id = ? AND f.deleted_at IS NULL
-        ");
+    $stmt = $this->db->prepare("SELECT u.first_name, u.middle_name, u.last_name, u.suffix, u.email, f.contact, f.profile_updated, 'faculty' AS role FROM faculty f JOIN users u ON f.user_id = u.user_id WHERE f.unique_faculty_id = ? AND f.deleted_at IS NULL");
     $stmt->execute([$input_user_id]);
     if ($data = $stmt->fetch(PDO::FETCH_ASSOC)) return $data;
 
-    $stmt = $this->db->prepare("
-            SELECT u.first_name, u.middle_name, u.last_name, u.suffix, u.email, st.contact, 'staff' AS role
-            FROM staff st
-            JOIN users u ON st.user_id = u.user_id
-            WHERE st.employee_id = ? AND st.deleted_at IS NULL
-        ");
+    $stmt = $this->db->prepare("SELECT u.first_name, u.middle_name, u.last_name, u.suffix, u.email, st.contact, st.profile_updated, 'staff' AS role FROM staff st JOIN users u ON st.user_id = u.user_id WHERE st.employee_id = ? AND st.deleted_at IS NULL");
     $stmt->execute([$input_user_id]);
     if ($data = $stmt->fetch(PDO::FETCH_ASSOC)) return $data;
 
@@ -126,9 +96,9 @@ class ManualBorrowingRepository
 
   public function getCollaterals(): array
   {
-    $stmt = $this->db->prepare("SELECT name FROM collaterals ORDER BY name ASC");
+    $stmt = $this->db->prepare("SELECT collateral_id, name FROM collaterals ORDER BY name ASC");
     $stmt->execute();
-    return $stmt->fetchAll(PDO::FETCH_COLUMN);
+    return $stmt->fetchAll(PDO::FETCH_ASSOC);
   }
 
   public function checkBook(string $accession_number): array
@@ -136,7 +106,6 @@ class ManualBorrowingRepository
     $stmt = $this->db->prepare("SELECT * FROM books WHERE accession_number = :acc LIMIT 1");
     $stmt->execute(['acc' => $accession_number]);
     $book = $stmt->fetch(PDO::FETCH_ASSOC);
-
     if ($book) {
       return [
         'exists' => true,
@@ -144,16 +113,12 @@ class ManualBorrowingRepository
         'details' => $book
       ];
     }
-
     return ['exists' => false];
   }
 
   public function createGuest(array $guestData): int
   {
-    $stmt = $this->db->prepare("
-        INSERT INTO guests (first_name, last_name, email, contact, created_at)
-        VALUES (:fn, :ln, :email, :contact, NOW())
-    ");
+    $stmt = $this->db->prepare("INSERT INTO guests (first_name, last_name, email, contact, created_at) VALUES (:fn, :ln, :email, :contact, NOW())");
     $stmt->execute([
       'fn'      => $guestData['first_name'],
       'ln'      => $guestData['last_name'],
@@ -167,7 +132,6 @@ class ManualBorrowingRepository
   {
     try {
       $this->db->beginTransaction();
-
       $transactionCode = strtoupper(bin2hex(random_bytes(4)));
       $studentId = $facultyId = $staffId = $guestId = null;
       $userId = null;
@@ -200,54 +164,44 @@ class ManualBorrowingRepository
 
       $isBook = !empty($borrowData['book_id']);
       $isEquipment = !empty($borrowData['equipment_id']);
-
-      if (!$isBook && !$isEquipment) {
-        throw new Exception("Either book_id or equipment_id must be provided.");
-      }
+      if (!$isBook && !$isEquipment) throw new Exception("Either book_id or equipment_id must be provided.");
 
       $dueDate = null;
-      if ($borrowData['borrower_type'] !== 'guest') {
+
+      if ($isBook && $borrowData['borrower_type'] !== 'guest') {
         $stmtPolicy = $this->db->prepare("SELECT max_books, borrow_duration_days FROM library_policies WHERE role = ? LIMIT 1");
         $stmtPolicy->execute([$borrowData['borrower_type']]);
         $policy = $stmtPolicy->fetch(PDO::FETCH_ASSOC);
-
         if ($policy) {
           $maxAllowed = (int)$policy['max_books'];
+          $currentActive = $this->countActiveBorrowedItems($userId);
+          if ($currentActive >= $maxAllowed) throw new Exception("Borrow limit exceeded. User already has $currentActive active items.");
+          $duration = (int)$policy['borrow_duration_days'];
+          $dueDate = date('Y-m-d H:i:s', strtotime("+{$duration} days"));
+        }
+      }
 
-          if ($isBook) {
-            $currentActive = $this->countActiveBorrowedItems($userId);
-            if ($currentActive >= $maxAllowed) {
-              throw new Exception("Borrow limit exceeded. User already has $currentActive active items (Limit: $maxAllowed).");
-            }
-            $duration = (int)$policy['borrow_duration_days'];
+      if ($isEquipment) {
+        $stmtPolicy = $this->db->prepare("SELECT max_books, borrow_duration_days FROM library_policies WHERE role = 'equipment' LIMIT 1");
+        $stmtPolicy->execute();
+        $policy = $stmtPolicy->fetch(PDO::FETCH_ASSOC);
+        if ($policy) {
+          $duration = (int)$policy['borrow_duration_days'];
+          if ($duration === 0) {
+            $dueDate = date('Y-m-d 23:59:59');
+          } else {
             $dueDate = date('Y-m-d H:i:s', strtotime("+{$duration} days"));
           }
         }
       }
 
-      if ($isEquipment) {
-        $dueDate = date('Y-m-d 23:59:59');
-      }
+      if (!$dueDate) $dueDate = date('Y-m-d H:i:s', strtotime("+7 days"));
 
-      if (!$dueDate) {
-        $dueDate = date('Y-m-d H:i:s', strtotime("+7 days"));
-      }
-
-      $collateralName = trim($borrowData['collateral_id'] ?? '');
-      if (!empty($collateralName)) {
-        $stmtCheckCollateral = $this->db->prepare("SELECT name FROM collaterals WHERE LOWER(name) = LOWER(?)");
-        $stmtCheckCollateral->execute([$collateralName]);
-        if (!$stmtCheckCollateral->fetch()) {
-          $stmtInsertCollateral = $this->db->prepare("INSERT INTO collaterals (name) VALUES (?)");
-          $stmtInsertCollateral->execute([$collateralName]);
-        }
-      }
+      $collateralId = !empty($borrowData['collateral_id']) ? (int)$borrowData['collateral_id'] : null;
 
       $stmt = $this->db->prepare("
-            INSERT INTO borrow_transactions
-            (student_id, staff_id, faculty_id, guest_id, transaction_code, borrowed_at, due_date, status, method, collateral_id, librarian_id)
-            VALUES
-            (:student_id, :staff_id, :faculty_id, :guest_id, :transaction_code, NOW(), :due_date, 'borrowed', 'manual', :collateral_id, :librarian_id)
+            INSERT INTO borrow_transactions (student_id, staff_id, faculty_id, guest_id, transaction_code, borrowed_at, due_date, status, method, collateral_id, librarian_id)
+            VALUES (:student_id, :staff_id, :faculty_id, :guest_id, :transaction_code, NOW(), :due_date, 'borrowed', 'manual', :collateral_id, :librarian_id)
         ");
       $stmt->execute([
         ':student_id' => $studentId,
@@ -256,7 +210,7 @@ class ManualBorrowingRepository
         ':guest_id' => $guestId,
         ':transaction_code' => $transactionCode,
         ':due_date' => $dueDate,
-        ':collateral_id' => $collateralName,
+        ':collateral_id' => $collateralId,
         ':librarian_id' => $borrowData['librarian_id'] ?? null
       ]);
 
@@ -271,35 +225,31 @@ class ManualBorrowingRepository
       if ($isEquipment) {
         $identifier = $borrowData['equipment_id'];
         $actualEquipmentId = null;
-
         if (is_numeric($identifier)) {
           $stmtCheck = $this->db->prepare("SELECT equipment_id, status FROM equipments WHERE equipment_id = ? AND is_active = 1");
           $stmtCheck->execute([$identifier]);
           $eq = $stmtCheck->fetch(PDO::FETCH_ASSOC);
-          if (!$eq || $eq['status'] !== 'available') throw new Exception("Equipment is not available.");
+          if (!$eq || $eq['status'] !== 'available') throw new Exception("Equipment not available.");
           $actualEquipmentId = $eq['equipment_id'];
         } else {
-          $stmtFindEquipment = $this->db->prepare("SELECT equipment_id, status FROM equipments WHERE (asset_tag = ? OR equipment_name = ?) AND is_active = 1 LIMIT 1");
-          $stmtFindEquipment->execute([$identifier, $identifier]);
-          $existingEquipment = $stmtFindEquipment->fetch(PDO::FETCH_ASSOC);
-
-          if ($existingEquipment) {
-            if ($existingEquipment['status'] !== 'available') throw new Exception("Equipment is not available.");
-            $actualEquipmentId = $existingEquipment['equipment_id'];
+          $stmtFind = $this->db->prepare("SELECT equipment_id, status FROM equipments WHERE (asset_tag = ? OR equipment_name = ?) AND is_active = 1 LIMIT 1");
+          $stmtFind->execute([$identifier, $identifier]);
+          $existing = $stmtFind->fetch(PDO::FETCH_ASSOC);
+          if ($existing) {
+            if ($existing['status'] !== 'available') throw new Exception("Equipment not available.");
+            $actualEquipmentId = $existing['equipment_id'];
           } else {
-            $stmtCreateEquipment = $this->db->prepare("INSERT INTO equipments (equipment_name, asset_tag, status, is_active, created_at) VALUES (?, ?, 'borrowed', 1, NOW())");
-            $stmtCreateEquipment->execute([$identifier, $identifier]);
+            $stmtCreate = $this->db->prepare("INSERT INTO equipments (equipment_name, asset_tag, status, is_active, created_at) VALUES (?, ?, 'borrowed', 1, NOW())");
+            $stmtCreate->execute([$identifier, $identifier]);
             $actualEquipmentId = $this->db->lastInsertId();
           }
         }
-
         $stmt = $this->db->prepare("INSERT INTO borrow_transaction_items (transaction_id, equipment_id, status) VALUES (?, ?, 'borrowed')");
         $stmt->execute([$transactionId, $actualEquipmentId]);
         $this->db->prepare("UPDATE equipments SET status = 'borrowed', updated_at = NOW() WHERE equipment_id = ?")->execute([$actualEquipmentId]);
       }
 
       $this->db->commit();
-
       return ['success' => true, 'transaction_id' => $transactionId, 'transaction_code' => $transactionCode];
     } catch (Exception $e) {
       if ($this->db->inTransaction()) $this->db->rollBack();
