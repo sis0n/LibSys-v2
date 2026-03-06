@@ -520,7 +520,7 @@ class UserRepository
             SELECT 
                 u.user_id, u.username, u.password, u.first_name, u.middle_name, u.last_name, u.suffix, 
                 u.profile_picture, s.student_number, s.course_id, s.year_level, s.section,
-                c.course_title, c.course_code
+                s.profile_updated, c.course_title, c.course_code
             FROM students s
             JOIN users u ON s.user_id = u.user_id
             LEFT JOIN courses c ON s.course_id = c.course_id

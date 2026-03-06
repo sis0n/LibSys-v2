@@ -47,8 +47,8 @@ class ScannerController extends Controller
             $yearLevel = (int)($user['year_level'] ?? 0);
             $section = $user['section'] ?? '';
 
-            if (!$courseId || !$yearLevel) {
-                throw new \Exception("Student profile incomplete (Course/Year not set).");
+            if (!$courseId || !$yearLevel || empty($user['profile_updated'])) {
+                throw new \Exception("Student profile incomplete. Please update your profile details first.");
             }
 
             $manila = new DateTimeZone('Asia/Manila');
@@ -118,8 +118,8 @@ class ScannerController extends Controller
             $yearLevel = (int)($user['year_level'] ?? 0);
             $section = $user['section'] ?? '';
 
-            if (!$courseId || !$yearLevel) {
-                throw new \Exception("Student profile incomplete (Course/Year not set).");
+            if (!$courseId || !$yearLevel || empty($user['profile_updated'])) {
+                throw new \Exception("Student profile incomplete. Please update your profile details first.");
             }
 
 

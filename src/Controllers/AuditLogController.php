@@ -28,12 +28,10 @@ class AuditLogController extends Controller
         try {
             $search = $_GET['search'] ?? '';
             $limit = (int)($_GET['limit'] ?? 50);
-            $offset = (int)($_GET['offset'] ?? 0);
             $page = (int)($_GET['page'] ?? 1);
+            if ($page < 1) $page = 1;
             
-            if ($page > 1) {
-                $offset = ($page - 1) * $limit;
-            }
+            $offset = ($page - 1) * $limit;
 
             $logs = $this->auditRepo->fetchLogs($search, $limit, $offset);
             $totalCount = $this->auditRepo->countLogs($search);

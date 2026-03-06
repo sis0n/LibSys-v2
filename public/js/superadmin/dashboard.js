@@ -29,7 +29,6 @@ document.addEventListener('DOMContentLoaded', function () {
         if (availableBooksEl) availableBooksEl.textContent = data.availableBooks;
         if (borrowedBooksEl) borrowedBooksEl.textContent = data.borrowed_books;
 
-        // Populate breakdown counters
         if (totalStudentsEl) totalStudentsEl.textContent = data.students;
         if (totalFacultyEl) totalFacultyEl.textContent = data.faculty;
         if (totalStaffEl) totalStaffEl.textContent = data.staff;
@@ -57,7 +56,7 @@ document.addEventListener('DOMContentLoaded', function () {
   function renderOverdueBooksTable(books) {
     if (!overdueBooksTableBody) return;
     if (!books || books.length === 0) {
-      overdueBooksTableBody.innerHTML = '<tr><td colspan="5" class="py-10 text-center text-gray-400 italic text-xs uppercase font-bold">No records found</td></tr>';
+      overdueBooksTableBody.innerHTML = '<tr><td colspan="5" class="py-10 text-center text-gray-400 italic text-xs uppercase font-bold tracking-widest">No records found</td></tr>';
       return;
     }
     overdueBooksTableBody.innerHTML = books.map((b, index) => {
@@ -77,7 +76,7 @@ document.addEventListener('DOMContentLoaded', function () {
   function renderPopularBooksTable(books) {
     if (!popularBooksTableBody) return;
     if (!books || books.length === 0) {
-      popularBooksTableBody.innerHTML = '<tr><td colspan="4" class="py-10 text-center text-gray-400 italic text-xs uppercase font-bold">No records found</td></tr>';
+      popularBooksTableBody.innerHTML = '<tr><td colspan="4" class="py-10 text-center text-gray-400 italic text-xs uppercase font-bold tracking-widest">No records found</td></tr>';
       return;
     }
     popularBooksTableBody.innerHTML = books.map((b, index) => {
@@ -96,20 +95,36 @@ document.addEventListener('DOMContentLoaded', function () {
   function renderRecentActivities(activities) {
     if (!recentActivitiesTableBody) return;
     if (!activities || activities.length === 0) {
-      recentActivitiesTableBody.innerHTML = '<tr><td colspan="5" class="py-10 text-center text-gray-400 italic text-xs uppercase font-bold">No recent activities</td></tr>';
+      recentActivitiesTableBody.innerHTML = '<tr><td colspan="5" class="py-10 text-center text-gray-400 italic text-xs uppercase font-bold tracking-widest">No recent activities</td></tr>';
       return;
     }
     recentActivitiesTableBody.innerHTML = activities.map((a, index) => {
-      const date = new Date(a.created_at).toLocaleString('en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
-      const user = a.full_name || a.username || "System";
+      const d = new Date(a.created_at);
+      const datePart = d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+      const timePart = d.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true });
+      
+      const rawUser = a.full_name || a.username || "System";
+      const truncatedUser = rawUser.length > 15 ? rawUser.substring(0, 15) + '...' : rawUser;
       const truncatedDetails = a.details.length > 30 ? a.details.substring(0, 30) + '...' : a.details;
+      
       return `
         <tr class="hover:bg-orange-50/30 transition-colors">
           <td class="px-4 py-3 text-left font-black text-orange-600 text-[13px]">${index + 1}</td>
-          <td class="px-4 py-3 text-left font-bold text-gray-700 uppercase tracking-tight text-[13px]">${user}</td>
-          <td class="px-4 py-3 text-left font-bold text-orange-700 uppercase tracking-tight text-[13px]">${a.action}</td>
-          <td class="px-4 py-3 text-left font-bold text-gray-600 uppercase tracking-tight text-[13px]" title="${a.details}">${truncatedDetails}</td>
-          <td class="px-4 py-3 text-right font-black text-gray-800 text-[12px] whitespace-nowrap">${date}</td>
+          <td class="px-4 py-3 text-left font-bold text-gray-700 uppercase tracking-tight text-[12px]" title="${rawUser}">${truncatedUser}</td>
+          <td class="px-4 py-3 text-left">
+            <span class="font-black text-orange-700 uppercase tracking-tighter text-[10px] bg-orange-100 px-2 py-0.5 rounded-md">
+              ${a.action}
+            </span>
+          </td>
+          <td class="px-4 py-3 text-left font-bold text-gray-600 uppercase tracking-tight text-[11px]" title="${a.details}">
+            ${truncatedDetails}
+          </td>
+          <td class="px-4 py-3 text-right">
+            <div class="flex flex-col leading-tight tabular-nums">
+              <span class="font-black text-gray-800 text-[11px] whitespace-nowrap">${datePart}</span>
+              <span class="font-bold text-gray-400 text-[9px] uppercase whitespace-nowrap">${timePart}</span>
+            </div>
+          </td>
         </tr>
       `;
     }).join('');
@@ -117,12 +132,10 @@ document.addEventListener('DOMContentLoaded', function () {
 
   function renderTopVisitorsTable(visitors) {
     if (!topVisitorsTableBody) return;
-
     if (!visitors || visitors.length === 0) {
-      topVisitorsTableBody.innerHTML = '<tr><td colspan="5" class="py-10 text-center text-gray-400 italic text-xs uppercase font-bold">No records found</td></tr>';
+      topVisitorsTableBody.innerHTML = '<tr><td colspan="5" class="py-10 text-center text-gray-400 italic text-xs uppercase font-bold tracking-widest">No records found</td></tr>';
       return;
     }
-
     topVisitorsTableBody.innerHTML = visitors.map((v, index) => {
       return `
         <tr class="hover:bg-orange-50/30 transition-colors">
@@ -138,13 +151,10 @@ document.addEventListener('DOMContentLoaded', function () {
 
   function renderWeeklyChart(activity) {
     if (!weeklyActivityCtx) return;
-
     const labels = activity.map(w => w.day);
     const visitorsData = activity.map(w => w.visitors);
     const borrowsData = activity.map(w => w.borrows);
-
     if (weeklyActivityChartInstance) weeklyActivityChartInstance.destroy();
-
     weeklyActivityChartInstance = new Chart(weeklyActivityCtx, {
       type: "line",
       data: {
@@ -171,9 +181,7 @@ document.addEventListener('DOMContentLoaded', function () {
         responsive: true,
         maintainAspectRatio: false,
         scales: {
-          y: {
-            beginAtZero: true
-          }
+          y: { beginAtZero: true }
         }
       }
     });
