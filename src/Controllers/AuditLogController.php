@@ -26,15 +26,17 @@ class AuditLogController extends Controller
     {
         header('Content-Type: application/json');
         try {
-            $search = $_GET['search'] ?? '';
-            $limit = (int)($_GET['limit'] ?? 50);
-            $page = (int)($_GET['page'] ?? 1);
+            $search   = $_GET['search'] ?? '';
+            $action   = $_GET['action'] ?? '';
+            $resource = $_GET['resource'] ?? '';
+            $limit    = (int)($_GET['limit'] ?? 50);
+            $page     = (int)($_GET['page'] ?? 1);
             if ($page < 1) $page = 1;
-            
+
             $offset = ($page - 1) * $limit;
 
-            $logs = $this->auditRepo->fetchLogs($search, $limit, $offset);
-            $totalCount = $this->auditRepo->countLogs($search);
+            $logs = $this->auditRepo->fetchLogs($search, $limit, $offset, $action, $resource);
+            $totalCount = $this->auditRepo->countLogs($search, $action, $resource);
 
             echo json_encode([
                 'success' => true,

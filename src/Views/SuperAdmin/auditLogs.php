@@ -9,17 +9,43 @@
 </div>
 
 <div class="bg-white border border-orange-200 rounded-xl shadow-sm p-6 mt-6">
-    <div class="flex items-center justify-between mb-6">
+    <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-4 mb-6">
         <div>
             <h3 class="text-lg font-semibold text-gray-800">System Logs</h3>
             <p class="text-sm text-gray-600">Complete record of system activities</p>
         </div>
-        <div class="flex items-center gap-3">
-            <div class="relative w-[350px]">
+
+        <div class="flex flex-wrap items-center gap-3">
+            <!-- Action Filter -->
+            <select id="actionFilter" class="bg-orange-50 border border-orange-200 text-gray-700 text-sm rounded-lg px-3 py-2 outline-none focus:ring-1 focus:ring-orange-300 shadow-sm cursor-pointer min-w-[120px]">
+                <option value="">All Actions</option>
+                <option value="ADD">ADD</option>
+                <option value="UPDATE">UPDATE</option>
+                <option value="DELETE">DELETE</option>
+                <option value="RESTORE">RESTORE</option>
+                <option value="LOGIN">LOGIN</option>
+                <option value="LOGOUT">LOGOUT</option>
+                <option value="IMPORT">BULK IMPORT</option>
+            </select>
+
+            <!-- Resource Filter -->
+            <select id="resourceFilter" class="bg-orange-50 border border-orange-200 text-gray-700 text-sm rounded-lg px-3 py-2 outline-none focus:ring-1 focus:ring-orange-300 shadow-sm cursor-pointer min-w-[140px]">
+                <option value="">All Resources</option>
+                <option value="BOOKS">BOOKS</option>
+                <option value="USERS">USERS</option>
+                <option value="EQUIPMENTS">EQUIPMENTS</option>
+                <option value="POLICIES">POLICIES</option>
+                <option value="AUTH">AUTH</option>
+                <option value="DATABASE">BACKUP/DATABASE</option>
+            </select>
+
+            <!-- Search -->
+            <div class="relative w-[300px]">
                 <i class="ph ph-magnifying-glass absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"></i>
-                <input type="text" id="logSearchInput" placeholder="Search by user, action, or details..."
+                <input type="text" id="logSearchInput" placeholder="Search details..."
                     class="bg-orange-50 border border-orange-200 rounded-lg pl-9 pr-3 py-2 outline-none transition text-sm w-full focus:ring-1 focus:ring-orange-300 shadow-sm">
             </div>
+
             <button id="refreshLogsBtn" class="p-2 text-orange-600 hover:bg-orange-50 rounded-lg border border-orange-200 transition shadow-sm" title="Refresh Logs">
                 <i class="ph ph-arrows-clockwise text-xl"></i>
             </button>
@@ -34,11 +60,11 @@
         <table class="min-w-full text-sm text-gray-700">
             <thead class="bg-orange-100 text-left text-gray-800">
                 <tr>
-                    <th class="py-3 px-6 font-bold uppercase tracking-wider">Timestamp</th>
-                    <th class="py-3 px-6 font-bold uppercase tracking-wider">User</th>
-                    <th class="py-3 px-6 font-bold uppercase tracking-wider">Action</th>
-                    <th class="py-3 px-6 font-bold uppercase tracking-wider">Resource</th>
-                    <th class="py-3 px-6 font-bold uppercase tracking-wider">Details</th>
+                    <th class="py-3 px-6 font-bold uppercase tracking-wider text-[11px]">Timestamp</th>
+                    <th class="py-3 px-6 font-bold uppercase tracking-wider text-[11px]">User</th>
+                    <th class="py-3 px-6 font-bold uppercase tracking-wider text-[11px]">Action</th>
+                    <th class="py-3 px-6 font-bold uppercase tracking-wider text-[11px]">Resource</th>
+                    <th class="py-3 px-6 font-bold uppercase tracking-wider text-[11px]">Details</th>
                 </tr>
             </thead>
             <tbody id="logTableBody" class="divide-y divide-orange-100 bg-white">
@@ -62,4 +88,7 @@
     </div>
 </div>
 
+<script>
+    const BASE_URL = "<?= BASE_URL ?>";
+</script>
 <script src="<?= BASE_URL ?>/js/superadmin/auditLogs.js" defer></script>

@@ -15,42 +15,51 @@ class AuditLogRepository
         $this->db = Database::getInstance()->getConnection();
     }
 
-    public function log($userId, $action, $resource = null, $resourceId = null, $details = null)
+    public function log($userId, $action, $resource, $resourceId, $details)
     {
         try {
             $sql = "INSERT INTO audit_logs (user_id, action, resource, resource_id, details, created_at) 
                     VALUES (:user_id, :action, :resource, :resource_id, :details, NOW())";
             $stmt = $this->db->prepare($sql);
             return $stmt->execute([
-                ':user_id' => $userId,
-                ':action' => $action,
-                ':resource' => $resource,
+                ':user_id'     => $userId,
+                ':action'      => $action,
+                ':resource'    => $resource,
                 ':resource_id' => $resourceId,
-                ':details' => $details
+                ':details'     => $details
             ]);
         } catch (Exception $e) {
-            error_log("AuditLogRepository error: " . $e->getMessage());
+            error_log("AuditLog error: " . $e->getMessage());
             return false;
         }
     }
 
-    public function fetchLogs($search = '', $limit = 50, $offset = 0)
+    public function fetchLogs($search = '', $limit = 50, $offset = 0, $action = '', $resource = '')
     {
         try {
-            $sql = "SELECT al.*, u.username, u.role, 
-                           CONCAT(u.first_name, ' ', u.last_name) as full_name 
+            $sql = "SELECT al.*, u.first_name, u.last_name, u.role, u.username
                     FROM audit_logs al
                     LEFT JOIN users u ON al.user_id = u.user_id
                     WHERE 1=1";
-            
             $params = [];
+
             if (!empty($search)) {
-                $sql .= " AND (u.username LIKE :search OR al.action LIKE :search OR al.resource LIKE :search OR al.details LIKE :search)";
+                $sql .= " AND (u.first_name LIKE :search OR u.last_name LIKE :search OR al.action LIKE :search OR al.resource LIKE :search OR al.details LIKE :search)";
                 $params[':search'] = "%$search%";
             }
 
-            $sql .= " ORDER BY al.created_at DESC LIMIT :limit OFFSET :offset";
-            
+            if (!empty($action)) {
+                $sql .= " AND al.action = :action";
+                $params[':action'] = $action;
+            }
+
+            if (!empty($resource)) {
+                $sql .= " AND al.resource = :resource";
+                $params[':resource'] = $resource;
+            }
+
+            $sql .= " ORDER BY al.created_at DESC, al.log_id DESC LIMIT :limit OFFSET :offset";
+
             $stmt = $this->db->prepare($sql);
             foreach ($params as $key => $val) {
                 $stmt->bindValue($key, $val);
@@ -58,24 +67,41 @@ class AuditLogRepository
             $stmt->bindValue(':limit', (int)$limit, PDO::PARAM_INT);
             $stmt->bindValue(':offset', (int)$offset, PDO::PARAM_INT);
             $stmt->execute();
-            
+
             return $stmt->fetchAll(PDO::FETCH_ASSOC);
         } catch (Exception $e) {
-            error_log("AuditLogRepository fetch error: " . $e->getMessage());
+            error_log("fetchLogs error: " . $e->getMessage());
             return [];
         }
     }
 
-    public function countLogs($search = '')
+    public function countLogs($search = '', $action = '', $resource = '')
     {
-        $sql = "SELECT COUNT(*) FROM audit_logs al LEFT JOIN users u ON al.user_id = u.user_id WHERE 1=1";
-        $params = [];
-        if (!empty($search)) {
-            $sql .= " AND (u.username LIKE :search OR al.action LIKE :search OR al.resource LIKE :search OR al.details LIKE :search)";
-            $params[':search'] = "%$search%";
+        try {
+            $sql = "SELECT COUNT(*) FROM audit_logs al LEFT JOIN users u ON al.user_id = u.user_id WHERE 1=1";
+            $params = [];
+
+            if (!empty($search)) {
+                $sql .= " AND (u.first_name LIKE :search OR u.last_name LIKE :search OR al.action LIKE :search OR al.resource LIKE :search OR al.details LIKE :search)";
+                $params[':search'] = "%$search%";
+            }
+
+            if (!empty($action)) {
+                $sql .= " AND al.action = :action";
+                $params[':action'] = $action;
+            }
+
+            if (!empty($resource)) {
+                $sql .= " AND al.resource = :resource";
+                $params[':resource'] = $resource;
+            }
+
+            $stmt = $this->db->prepare($sql);
+            $stmt->execute($params);
+            return $stmt->fetchColumn();
+        } catch (Exception $e) {
+            error_log("countLogs error: " . $e->getMessage());
+            return 0;
         }
-        $stmt = $this->db->prepare($sql);
-        $stmt->execute($params);
-        return $stmt->fetchColumn();
     }
 }
