@@ -1,26 +1,22 @@
 <?php
+
 use App\Repositories\StaffBorrowingHistoryRepository;
 
 $staffHistoryRepo = new StaffBorrowingHistoryRepository();
 
-$userId = $_SESSION['user_data']['user_id'];
+$userId = $_SESSION['user_id'];
 
 date_default_timezone_set('Asia/Manila');
 $today = new DateTime('today');
 
 $stats = $staffHistoryRepo->getBorrowingStats($userId);
-$totalBorrowed = $stats['currently_borrowed']; 
-$totalOverdue = $stats['total_overdue'];   
+$totalBorrowed = $stats['currently_borrowed'];
+$totalOverdue = $stats['total_overdue'];
 
-$allHistoryRecords = $staffHistoryRepo->getPaginatedBorrowingHistory($userId, 100, 0); 
-
-$currentBorrowedBooks = [];
-foreach ($allHistoryRecords as $record) {
-
-    if ($record['status'] === 'borrowed') {
-        $currentBorrowedBooks[] = $record;
-    }
-}
+$allHistory = $staffHistoryRepo->getDetailedHistory($userId);
+$currentBorrowedBooks = array_filter($allHistory, function ($record) {
+    return in_array($record['status'], ['borrowed', 'overdue']);
+});
 ?>
 
 <body class="min-h-screen p-6">
@@ -59,39 +55,39 @@ foreach ($allHistoryRecords as $record) {
             <p class="text-sm text-gray-600 mb-4">Books you need to return</p>
 
             <?php if (empty($currentBorrowedBooks)): ?>
-            <div class="text-center text-gray-500 p-4">
-                <i class="ph ph-book-open text-4xl mb-2"></i>
-                <p>You have no borrowed books.</p>
-            </div>
-            <?php else: ?>
-            <?php foreach (array_slice($currentBorrowedBooks, 0, 3) as $book): ?>
-            <?php
-                    $dueDate = new DateTime($book['due_date']);
-                    $isOverdue = ($dueDate < $today && $book['status'] === 'borrowed');
-                    ?>
-            <div
-                class="bg-[var(--color-orange-50)] border border-[var(--color-border)] rounded-md p-3 mb-3 flex justify-between items-center">
-                <div>
-                    <p class="font-medium"><?= htmlspecialchars($book['title']) ?></p>
-                    <p class="text-sm text-gray-600">by <?= htmlspecialchars($book['author']) ?></p>
-                    <p class="text-xs text-gray-500">Due: <?= $dueDate->format('F j, Y') ?></p>
+                <div class="text-center text-gray-500 p-4">
+                    <i class="ph ph-book-open text-4xl mb-2"></i>
+                    <p>You have no borrowed books.</p>
                 </div>
+            <?php else: ?>
+                <?php foreach (array_slice($currentBorrowedBooks, 0, 3) as $book): ?>
+                    <?php
+                    $dueDate = new DateTime($book['due_date']);
+                    $isOverdue = ($dueDate < $today || $book['status'] === 'overdue');
+                    ?>
+                    <div
+                        class="bg-[var(--color-orange-50)] border border-[var(--color-border)] rounded-md p-3 mb-3 flex justify-between items-center">
+                        <div>
+                            <p class="font-medium"><?= htmlspecialchars($book['title']) ?></p>
+                            <p class="text-sm text-gray-600">by <?= htmlspecialchars($book['author']) ?></p>
+                            <p class="text-xs text-gray-500">Due: <?= $dueDate->format('F j, Y') ?></p>
+                        </div>
 
-                <?php if ($isOverdue): ?>
-                <span class="bg-[var(--color-destructive)] text-white px-3 py-1 text-xs rounded-full">Overdue</span>
-                <?php else: ?>
-                <span class="bg-[var(--color-orange-500)] text-white px-3 py-1 text-xs rounded-full">Borrowed</span>
+                        <?php if ($isOverdue): ?>
+                            <span class="bg-[var(--color-destructive)] text-white px-3 py-1 text-xs rounded-full">Overdue</span>
+                        <?php else: ?>
+                            <span class="bg-[var(--color-orange-500)] text-white px-3 py-1 text-xs rounded-full">Borrowed</span>
+                        <?php endif; ?>
+                    </div>
+                <?php endforeach; ?>
+
+                <?php if (count($currentBorrowedBooks) > 3): ?>
+                    <div class="mt-4 text-center">
+                        <a href="borrowingHistory" class="text-sm font-medium text-orange-600 hover:underline">
+                            View All (<?= count($currentBorrowedBooks) ?>)
+                        </a>
+                    </div>
                 <?php endif; ?>
-            </div>
-            <?php endforeach; ?>
-
-            <?php if (count($currentBorrowedBooks) > 3): ?>
-            <div class="mt-4 text-center">
-                <a href="borrowingHistory" class="text-sm font-medium text-orange-600 hover:underline">
-                    View All (<?= count($currentBorrowedBooks) ?>)
-                </a>
-            </div>
-            <?php endif; ?>
             <?php endif; ?>
         </div>
 

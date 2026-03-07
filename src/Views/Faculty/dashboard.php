@@ -1,27 +1,22 @@
 <?php
+
 use App\Repositories\FacultyBorrowingHistoryRepository;
 
 $facultyHistoryRepo = new FacultyBorrowingHistoryRepository();
 
-$userId = $_SESSION['user_data']['user_id'];
+$userId = $_SESSION['user_id'];
 
 date_default_timezone_set('Asia/Manila');
 $today = new DateTime('today');
 
-
 $stats = $facultyHistoryRepo->getBorrowingStats($userId);
 $totalBorrowed = $stats['currently_borrowed'];
-$totalOverdue = $stats['total_overdue'];   
+$totalOverdue = $stats['total_overdue'];
 
-$allHistoryRecords = $facultyHistoryRepo->getPaginatedBorrowingHistory($userId, 100, 0);
-
-$currentBorrowedBooks = [];
-foreach ($allHistoryRecords as $record) {
-
-    if ($record['status'] === 'borrowed') {
-        $currentBorrowedBooks[] = $record;
-    }
-}
+$allHistory = $facultyHistoryRepo->getDetailedHistory($userId);
+$currentBorrowedBooks = array_filter($allHistory, function ($record) {
+    return in_array($record['status'], ['borrowed', 'overdue']);
+});
 ?>
 
 <body class="min-h-screen p-6">
@@ -66,7 +61,7 @@ foreach ($allHistoryRecords as $record) {
                 <?php foreach (array_slice($currentBorrowedBooks, 0, 3) as $book): ?>
                     <?php
                     $dueDate = new DateTime($book['due_date']);
-                    $isOverdue = ($dueDate < $today && $book['status'] === 'borrowed');
+                    $isOverdue = ($dueDate < $today || $book['status'] === 'overdue');
                     ?>
                     <div
                         class="bg-[var(--color-orange-50)] border border-[var(--color-border)] rounded-md p-3 mb-3 flex justify-between items-center">
