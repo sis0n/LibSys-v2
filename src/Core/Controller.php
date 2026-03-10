@@ -8,10 +8,16 @@ class Controller
 {
     private $UserRepository;
 
-
-
     public function __construct()
     {
+        if (session_status() === PHP_SESSION_NONE) {
+            session_start();
+        }
+
+        if (empty($_SESSION['csrf_token'])) {
+            $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
+        }
+
         if (isset($_SESSION['user_id'])) {
             $this->UserRepository = new UserRepository();
             $currentUser = $this->UserRepository->getUserById($_SESSION['user_id']);
@@ -24,14 +30,25 @@ class Controller
             }
         }
     }
-    /**
-     * Render a view with optional header/footer layout
-     *
-     * @param string $view  View file path (relative to Views folder, without .php)
-     * @param array  $data  Data to extract into the view
-     * @param void   $withLayout Include header/footer (default: true)
-     */
-    // File: App/Core/Controller.php (Updated view method)
+
+    protected function validateCsrf(): bool
+    {
+        $token = $_POST['csrf_token'] ?? $_SERVER['HTTP_X_CSRF_TOKEN'] ?? '';
+        return !empty($token) && hash_equals($_SESSION['csrf_token'], $token);
+    }
+
+    protected function sanitize($data)
+    {
+        if (is_array($data)) {
+            return array_map([$this, 'sanitize'], $data);
+        }
+        return htmlspecialchars(trim($data), ENT_QUOTES, 'UTF-8');
+    }
+
+    protected function getPostData(): array
+    {
+        return $this->sanitize($_POST);
+    }
 
     public function view(string $view, array $data = [], bool $withLayout = true): void
     {
@@ -45,32 +62,25 @@ class Controller
         $footer = $basePath . "partials/footer.php";
         $viewPath = $basePath . $view . ".php";
 
-
-        // Check if the current view is the scanner view
         $isScannerView = (strpos($view, 'scanner/attendance') !== false);
 
         if ($withLayout && !$isScannerView) {
-            // --- STANDARD LAYOUT (With Sidebar) ---
             if (file_exists($head)) {
                 include $head;
             }
             echo '<body class="bg-gray-50 font-sans min-h-screen flex">';
             echo '<div class="flex min-h-screen w-full">';
 
-            // Sidebar
             if (file_exists($sidebar)) {
                 include $sidebar;
             }
 
-            // Right side (header + content + footer)
             echo '<div class="flex-1 flex flex-col">';
 
-            // Header
             if (file_exists($header)) {
                 include $header;
             }
 
-            // Main Content (expandable)
             echo '<main class="flex-1 p-6">';
             if (file_exists($viewPath)) {
                 include $viewPath;
@@ -80,15 +90,14 @@ class Controller
             }
             echo '</main>';
 
-            // Footer (push to bottom)
             if (file_exists($footer)) {
                 echo '<div class="mt-auto">';
                 include $footer;
                 echo '</div>';
             }
 
-            echo '</div>'; // close right side
-            echo '</div>'; // close flex wrapper
+            echo '</div>';
+            echo '</div>';
             echo '</body>';
         } else {
             if (file_exists($viewPath)) {

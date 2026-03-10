@@ -159,8 +159,12 @@ document.addEventListener('DOMContentLoaded', function () {
     if (modalReturnButton) {
         modalReturnButton.addEventListener('click', async () => {
             const id = modalReturnButton.dataset.borrowingId;
+            const condition = document.querySelector('input[name="item_condition"]:checked')?.value || 'good';
+            
             const formData = new FormData();
             formData.append('borrowing_id', id);
+            formData.append('condition', condition);
+
             try {
                 const response = await fetch('api/admin/returning/markReturned', { method: 'POST', body: formData });
                 const result = await response.json();

@@ -13,6 +13,7 @@ class ReturningController extends Controller
 
   public function __construct()
   {
+    parent::__construct();
     $this->returningRepo = new ReturningRepository();
     $this->auditRepo = new \App\Repositories\AuditLogRepository();
   }
@@ -48,7 +49,8 @@ class ReturningController extends Controller
 
   public function checkBookStatus()
   {
-    $identifier = $_POST['accession_number'] ?? null;
+    $data = $this->getPostData();
+    $identifier = $data['accession_number'] ?? null;
     if (!$identifier) {
       $this->sendJson(['success' => false, 'message' => 'Accession Number or Item ID is required.'], 400);
       return;
@@ -63,7 +65,10 @@ class ReturningController extends Controller
 
   public function returnBook()
   {
-    $itemId = $_POST['borrowing_id'] ?? null;
+    $data = $this->getPostData();
+    $itemId = $data['borrowing_id'] ?? null;
+    $condition = $data['condition'] ?? 'good';
+
     if (!$itemId) {
       $this->sendJson(['success' => false, 'message' => 'Borrowing Item ID is required.'], 400);
       return;
@@ -86,12 +91,18 @@ class ReturningController extends Controller
     $stmt->execute([$itemId]);
     $itemInfo = $stmt->fetch(\PDO::FETCH_ASSOC);
 
-    $success = $this->returningRepo->markAsReturned((int)$itemId);
+    $success = $this->returningRepo->markAsReturned((int)$itemId, $condition);
 
     if ($success) {
       $itemName = $itemInfo['title'] ?: $itemInfo['equipment_name'] ?: "Unknown Item";
       $borrower = ($itemInfo['first_name'] . ' ' . $itemInfo['last_name']) ?: "Unknown Borrower";
-      $this->auditRepo->log($_SESSION['user_id'], 'RETURN', 'TRANSACTIONS', $itemId, "Item '$itemName' returned by $borrower.");
+      
+      $actionDetails = "Item '$itemName' returned by $borrower.";
+      if ($condition !== 'good') {
+          $actionDetails = "Item '$itemName' marked as " . strtoupper($condition) . " during return by $borrower.";
+      }
+
+      $this->auditRepo->log($_SESSION['user_id'], 'RETURN', 'TRANSACTIONS', $itemId, $actionDetails);
       
       $recent = $this->returningRepo->getRecentReturns(10);
       $this->sendJson(['success' => true, 'message' => 'Book returned successfully!', 'recent' => $recent]);
@@ -102,8 +113,9 @@ class ReturningController extends Controller
 
   public function extendDueDate()
   {
-    $itemId = $_POST['borrowing_id'] ?? null;
-    $daysToExtend = $_POST['days'] ?? null;
+    $data = $this->getPostData();
+    $itemId = $data['borrowing_id'] ?? null;
+    $daysToExtend = $data['days'] ?? null;
     if (!$itemId || !$daysToExtend) {
       $this->sendJson(['success' => false, 'message' => 'Required fields missing.'], 400);
       return;

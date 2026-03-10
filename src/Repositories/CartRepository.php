@@ -16,9 +16,18 @@ class CartRepository
 
   public function addToCart(int $userId, int $bookId): bool
   {
-    $check = $this->db->prepare("SELECT 1 FROM carts WHERE user_id = ? AND book_id = ?");
-    $check->execute([$userId, $bookId]);
-    if ($check->fetch()) {
+    // Phase 4: Validate book availability before adding to cart
+    $checkBook = $this->db->prepare("SELECT availability FROM books WHERE book_id = ?");
+    $checkBook->execute([$bookId]);
+    $book = $checkBook->fetch(PDO::FETCH_ASSOC);
+
+    if (!$book || $book['availability'] !== 'available') {
+      return false; // Cannot add damaged, lost, or borrowed books
+    }
+
+    $checkDuplicate = $this->db->prepare("SELECT 1 FROM carts WHERE user_id = ? AND book_id = ?");
+    $checkDuplicate->execute([$userId, $bookId]);
+    if ($checkDuplicate->fetch()) {
       return false;
     }
 

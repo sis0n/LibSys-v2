@@ -255,7 +255,7 @@ class BookManagementRepository
             
             LEFT JOIN users u ON (s.user_id = u.user_id OR f.user_id = u.user_id OR st.user_id = u.user_id)
             
-            WHERE bti.book_id = :book_id AND bti.status IN ('borrowed', 'returned')
+            WHERE bti.book_id = :book_id AND bti.status IN ('borrowed', 'returned', 'damaged', 'lost', 'overdue')
             ORDER BY bt.borrowed_at DESC
         ";
 

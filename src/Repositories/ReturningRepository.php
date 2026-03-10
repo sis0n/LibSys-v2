@@ -247,7 +247,7 @@ class ReturningRepository
     }
   }
 
-  public function markAsReturned($itemId): ?array
+  public function markAsReturned($itemId, $condition = 'good'): ?array
   {
     try {
       $this->db->beginTransaction();
@@ -269,19 +269,22 @@ class ReturningRepository
       $equipmentId = $itemInfo['equipment_id'];
       $transactionId = $itemInfo['transaction_id'];
 
+      $itemStatus = ($condition === 'good') ? 'returned' : $condition;
+      $availabilityStatus = ($condition === 'good') ? 'available' : $condition;
+
       $stmtUpdateItem = $this->db->prepare("
                 UPDATE borrow_transaction_items
-                SET status = 'returned', returned_at = NOW()
+                SET status = ?, returned_at = NOW()
                 WHERE item_id = ?
             ");
-      $stmtUpdateItem->execute([$itemId]);
+      $stmtUpdateItem->execute([$itemStatus, $itemId]);
 
       if ($bookId !== null) {
-        $stmtUpdateBook = $this->db->prepare("UPDATE books SET availability = 'available' WHERE book_id = ?");
-        $stmtUpdateBook->execute([$bookId]);
+        $stmtUpdateBook = $this->db->prepare("UPDATE books SET availability = ? WHERE book_id = ?");
+        $stmtUpdateBook->execute([$availabilityStatus, $bookId]);
       } elseif ($equipmentId !== null) {
-        $stmtUpdateEquipment = $this->db->prepare("UPDATE equipments SET status = 'available' WHERE equipment_id = ?");
-        $stmtUpdateEquipment->execute([$equipmentId]);
+        $stmtUpdateEquipment = $this->db->prepare("UPDATE equipments SET status = ? WHERE equipment_id = ?");
+        $stmtUpdateEquipment->execute([$availabilityStatus, $equipmentId]);
       } else {
         $this->db->rollBack();
         return null;
