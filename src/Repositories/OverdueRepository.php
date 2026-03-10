@@ -56,7 +56,8 @@ class OverdueRepository
             SELECT 
                 bti.item_id, bti.status, bti.returned_at,
                 bt.due_date, bt.borrowed_at, bt.transaction_id,
-                b.title AS item_title, b.accession_number,
+                COALESCE(b.title, e.equipment_name) AS item_title, 
+                b.accession_number,
                 e.equipment_name, e.asset_tag,
                 u.first_name, u.last_name, u.email, u.user_id,
                 s.student_number, s.year_level, s.section,
@@ -79,9 +80,9 @@ class OverdueRepository
 
         $params = [];
         if (!empty($filters['search'])) {
-            $sql .= " AND (u.first_name LIKE ? OR u.last_name LIKE ? OR s.student_number LIKE ? OR b.title LIKE ?)";
+            $sql .= " AND (u.first_name LIKE ? OR u.last_name LIKE ? OR s.student_number LIKE ? OR b.title LIKE ? OR e.equipment_name LIKE ?)";
             $search = "%{$filters['search']}%";
-            array_push($params, $search, $search, $search, $search);
+            array_push($params, $search, $search, $search, $search, $search);
         }
 
         $sql .= " ORDER BY days_late DESC";
