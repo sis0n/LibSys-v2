@@ -14,7 +14,7 @@
             <div
                 class="bg-[var(--color-card)] rounded-xl shadow-lg border border-[var(--color-border)] w-full max-w-md p-6 animate-fadeIn">
                 <div class="flex justify-between items-start mb-4">
-                    <h2 class="text-lg font-semibold">Bulk Import Books</h2>
+                    <h2 class="text-lg font-semibold">Bulk Import Users</h2>
                     <button id="closeImportModal" class="text-gray-500 hover:text-red-700 transition">
                         <i class="ph ph-x text-2xl"></i>
                     </button>
@@ -28,7 +28,7 @@
                         <i class="ph ph-upload text-[var(--color-ring)] text-3xl mb-2 block"></i>
                         <p class="font-medium text-[var(--color-ring)]">Drop CSV file here or click to browse</p>
                         <p class="text-xs text-gray-500 mt-1">Expected format: accession_number,call_number,title</p>
-                        <input type="file" id="csvFile" accept=".csv" class="hidden" />
+                        <input type="file" id="csvFile" name="csv_file" accept=".csv" class="hidden" />
                     </label>
                 </form>
                 <div class="text-center mt-4">
@@ -352,6 +352,55 @@
     </div>
 </div>
 
+<div id="viewBookModal" class="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 hidden opacity-0 transition-opacity duration-300 ease-out p-4">
+    <div id="viewBookModalContent" class="bg-[var(--color-card)] w-full max-w-lg rounded-2xl shadow-lg overflow-hidden transform scale-95 transition-transform duration-300 ease-out max-h-[90vh] flex flex-col">
+        <div class="bg-gradient-to-r from-orange-500 to-amber-500 p-4 text-white flex-shrink-0 flex justify-between items-center rounded-t-xl">
+            <div class="flex items-center gap-3 overflow-hidden text-white">
+                <img id="viewModalImg" src="" alt="Book Cover" class="w-12 h-16 object-cover rounded-md bg-white flex-shrink-0 hidden shadow-sm" />
+                <div class="overflow-hidden">
+                    <h2 id="viewModalTitle" class="text-lg font-bold text-white truncate">Book Title</h2>
+                    <p id="viewModalAuthor" class="text-sm truncate text-orange-50">by Author</p>
+                </div>
+            </div>
+            <button id="closeViewModal" class="text-white text-3xl hover:text-red-200 transition-colors duration-200 flex-shrink-0 ml-2">
+                <i class="ph ph-x-circle"></i>
+            </button>
+        </div>
+        <div class="p-4 space-y-4 overflow-y-auto bg-gray-50/30">
+            <div class="grid grid-cols-2 gap-4">
+                <div class="p-3 shadow-sm border border-orange-100 bg-white rounded flex flex-col items-start">
+                    <p class="text-xs text-orange-500 font-semibold mb-1 uppercase tracking-wider">Status</p>
+                    <p id="viewModalStatus" class="font-bold text-sm text-gray-800 uppercase">AVAILABLE</p>
+                </div>
+                <div class="p-3 shadow-sm border border-orange-100 bg-white rounded flex flex-col items-start">
+                    <p class="text-xs text-orange-500 font-semibold mb-1 uppercase tracking-wider">Call Number</p>
+                    <p id="viewModalCallNumber" class="text-sm font-bold text-gray-800">N/A</p>
+                </div>
+            </div>
+            <div class="text-sm bg-white rounded-xl border border-orange-100 p-4 space-y-2 shadow-sm">
+                <p class="font-bold text-gray-700 text-sm mb-2 border-b border-orange-50 pb-1">Book Information</p>
+                <p><span class="text-gray-500 w-28 inline-block flex-shrink-0">Accession #:</span> <span id="viewModalAccessionNumber" class="font-mono text-sm font-semibold text-orange-600 break-words"></span></p>
+                <p><span class="text-gray-500 w-28 inline-block flex-shrink-0">ISBN:</span> <span id="viewModalIsbn" class="break-words text-gray-800"></span></p>
+                <p><span class="text-gray-500 w-28 inline-block flex-shrink-0">Subject:</span> <span id="viewModalSubject" class="break-words text-gray-800"></span></p>
+                <p><span class="text-gray-500 w-28 inline-block flex-shrink-0">Place:</span> <span id="viewModalPlace" class="break-words text-gray-800"></span></p>
+                <p><span class="text-gray-500 w-28 inline-block flex-shrink-0">Publisher:</span> <span id="viewModalPublisher" class="break-words text-gray-800"></span></p>
+                <p><span class="text-gray-500 w-28 inline-block flex-shrink-0">Year:</span> <span id="viewModalYear" class="break-words text-gray-800"></span></p>
+                <p><span class="text-gray-500 w-28 inline-block flex-shrink-0">Edition:</span> <span id="viewModalEdition" class="break-words text-gray-800"></span></p>
+                <p><span class="text-gray-500 w-28 inline-block flex-shrink-0">Supplementary:</span> <span id="viewModalSupplementary" class="break-words text-gray-800"></span></p>
+            </div>
+            <div class="bg-orange-50/30 rounded-xl p-4 border border-orange-100 shadow-sm">
+                <p class="font-bold text-orange-800 mb-1 text-sm">Description</p>
+                <p class="text-gray-700 text-sm leading-relaxed" id="viewModalDescription"></p>
+            </div>
+        </div>
+        <div class="flex justify-end gap-3 p-4 bg-white border-t border-orange-50 mt-auto flex-shrink-0 rounded-b-xl">
+            <button type="button" id="closeViewModalBtn" class="bg-gray-100 border border-gray-200 text-gray-700 px-6 py-2 rounded-lg text-sm font-bold hover:bg-gray-200 transition shadow-sm">
+                Close
+            </button>
+        </div>
+    </div>
+</div>
+
 <div id="historyModal" class="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50 hidden p-4">
     <div class="bg-[var(--color-card)] rounded-xl shadow-lg border border-[var(--color-border)] w-full max-w-2xl max-h-[85vh] flex flex-col animate-fadeIn overflow-hidden">
         <div class="bg-gradient-to-r from-orange-500 to-amber-500 p-5 text-white flex justify-between items-center flex-shrink-0">
@@ -392,5 +441,4 @@
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-<script src="<?= BASE_URL ?>/js/admin/bookManagement.js" defer></script>
-
+<script src="js/admin/bookManagement.js" defer></script>

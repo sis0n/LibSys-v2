@@ -182,8 +182,7 @@ window.addEventListener("DOMContentLoaded", () => {
     !importModal ||
     !searchInput ||
     !paginationList ||
-    !resultsIndicator ||
-    !viewBookModal
+    !resultsIndicator
   ) {
     console.error("BookManagement Error: Core components missing.");
     if (bookTableBody)
@@ -556,13 +555,15 @@ window.addEventListener("DOMContentLoaded", () => {
     let rowsHtml = "";
     booksToRender.forEach((book) => {
       const isSelected = selectedBooks.has(book.book_id);
-      const statusColor =
-        book.availability === "available"
-          ? "bg-green-600"
-          : book.availability === "borrowed"
-            ? "bg-orange-500"
-            : "bg-gray-600";
+      let statusColor = "bg-gray-600";
+      if (book.availability === "available") statusColor = "bg-green-600";
+      else if (book.availability === "borrowed") statusColor = "bg-orange-500";
+      else if (book.availability === "damaged") statusColor = "bg-amber-500";
+      else if (book.availability === "lost") statusColor = "bg-red-600";
+
+
       const title = book.title
+
         ? String(book.title).replace(/</g, "&lt;")
         : "N/A";
       const author = book.author
@@ -1192,21 +1193,24 @@ window.addEventListener("DOMContentLoaded", () => {
         : "";
 
       let fullReturnedDateTime = "";
-      if (h.status === "returned" && rDateObj) {
+      if ((h.status === "returned" || h.status === "damaged" || h.status === "lost") && rDateObj) {
+        const colorClass = h.status === "returned" ? "text-green-700" : h.status === "damaged" ? "text-amber-700" : "text-red-700";
+        const subColorClass = h.status === "returned" ? "text-green-600" : h.status === "damaged" ? "text-amber-600" : "text-red-600";
         fullReturnedDateTime = `
                     <div class="flex flex-col">
-                        <span class="text-green-700 font-bold text-[15px]">${rDateStr}</span>
-                        <span class="text-[12px] text-green-600 font-medium mt-0.5">${rTimeStr}</span>
+                        <span class="${colorClass} font-bold text-[15px]">${rDateStr}</span>
+                        <span class="text-[12px] ${subColorClass} font-medium mt-0.5">${rTimeStr}</span>
                     </div>
                 `;
       } else {
         fullReturnedDateTime = `<span class="text-gray-400 italic text-[13px]">In Circulation</span>`;
       }
 
-      const statusClass =
-        h.status === "returned"
-          ? "bg-green-100 text-green-700 border-green-200"
-          : "bg-orange-100 text-orange-700 border-orange-200";
+      let statusClass = "bg-gray-100 text-gray-700 border-gray-200";
+      if (h.status === "returned") statusClass = "bg-green-100 text-green-700 border-green-200";
+      else if (h.status === "borrowed" || h.status === "overdue") statusClass = "bg-orange-100 text-orange-700 border-orange-200";
+      else if (h.status === "damaged") statusClass = "bg-amber-100 text-amber-700 border-amber-200";
+      else if (h.status === "lost") statusClass = "bg-red-100 text-red-700 border-red-200";
 
       const row = `
                 <tr class="hover:bg-gray-50 transition-colors">
