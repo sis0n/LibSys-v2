@@ -26,7 +26,20 @@ class Database
             $this->connection = new PDO("$driver:host=$host;dbname=$db;charset=utf8", $user, $pass);
             $this->connection->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
         } catch (PDOException $e) {
-            die("Database connection failed: " . $e->getMessage());
+            error_log("Database connection failed: " . $e->getMessage());
+            
+            if (($_ENV['APP_DEBUG'] ?? 'false') === 'true') {
+                die("<h1>Database Connection Error</h1><p>" . $e->getMessage() . "</p>");
+            }
+
+            http_response_code(500);
+            $error_view = __DIR__ . '/../Views/errors/500.php';
+            if (file_exists($error_view)) {
+                include $error_view;
+            } else {
+                echo "<h1>500 Internal Server Error</h1><p>Database connection failed.</p>";
+            }
+            exit;
         }
     }
 

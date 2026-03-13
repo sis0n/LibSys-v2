@@ -88,18 +88,35 @@ class Router
         [$controllerName, $methodName] = explode('@', $controller);
         $controllerClass = "App\\Controllers\\$controllerName";
 
-        if (!class_exists($controllerClass)) {
-          throw new \Exception("Controller $controllerClass not found");
+        try {
+          if (!class_exists($controllerClass)) {
+            throw new \Exception("Controller $controllerClass not found");
+          }
+
+          $controllerInstance = new $controllerClass();
+
+          if (!method_exists($controllerInstance, $methodName)) {
+            throw new \Exception("Method $methodName not found in $controllerClass");
+          }
+
+          // Pass dynamic params (like $id)
+          return $controllerInstance->$methodName(...$matches);
+        } catch (\Throwable $e) {
+          error_log("Router error: " . $e->getMessage());
+
+          if (($_ENV['APP_DEBUG'] ?? 'false') === 'true') {
+            die("<h1>Application Error (Debug Mode)</h1><p>" . $e->getMessage() . "</p><pre>" . $e->getTraceAsString() . "</pre>");
+          }
+
+          http_response_code(500);
+          $error_view = __DIR__ . '/../Views/errors/500.php';
+          if (file_exists($error_view)) {
+            include $error_view;
+          } else {
+            echo "<h1>500 Internal Server Error</h1><p>Something went wrong on our end.</p>";
+          }
+          exit;
         }
-
-        $controllerInstance = new $controllerClass();
-
-        if (!method_exists($controllerInstance, $methodName)) {
-          throw new \Exception("Method $methodName not found in $controllerClass");
-        }
-
-        // Pass dynamic params (like $id)
-        return $controllerInstance->$methodName(...$matches);
       }
     }
 
