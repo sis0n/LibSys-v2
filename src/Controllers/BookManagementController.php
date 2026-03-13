@@ -190,7 +190,11 @@ class BookManagementController extends Controller
 
         try {
             $book = $this->bookRepo->findBookById($id);
-            if ($book && isset($book['availability'])) {
+            if (!$book) {
+                return $this->json(['success' => false, 'message' => 'Book not found.'], 404);
+            }
+
+            if (!isset($data['availability'])) {
                 $data['availability'] = $book['availability'];
             }
 
