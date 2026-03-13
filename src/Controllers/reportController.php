@@ -157,6 +157,23 @@ class ReportController extends Controller
         }
     }
 
+    public function getLostDamagedBooksReport()
+    {
+        header('Cache-Control: no-store, no-cache, must-revalidate, max-age=0');
+        header('Pragma: no-cache');
+        header('Expires: 0');
+        header('Content-Type: application/json');
+        try {
+            $filter = $_GET['filter'] ?? 'month';
+            $repository = new ReportRepository();
+            $data = $repository->getLostDamagedBooksSummary($filter);
+            echo json_encode(['success' => true, 'data' => $data]);
+        } catch (Exception $e) {
+            http_response_code(500);
+            echo json_encode(['success' => false, 'message' => 'Error fetching lost and damaged books report: ' . $e->getMessage()]);
+        }
+    }
+
     public function getActivityReport()
     {
         header('Content-Type: application/json');

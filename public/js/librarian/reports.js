@@ -265,6 +265,39 @@ document.addEventListener('DOMContentLoaded', function () {
         }
     }
 
+    async function populateLostDamagedBooks(filter = 'month') {
+        const tbody = document.getElementById('lost-damaged-books-tbody');
+        if (!tbody) return;
+        tbody.innerHTML = '<tr><td colspan="5" class="text-center p-4"><i class="ph ph-spinner animate-spin text-lg mr-2"></i>Loading...</td></tr>';
+        try {
+            const response = await fetch(`${BASE_URL}/api/librarian/reports/lost-damaged-books?filter=${filter}`);
+            const result = await response.json();
+            tbody.innerHTML = '';
+            if (result.success && result.data && result.data.length > 0) {
+                result.data.forEach(row => {
+                    const isTotalRow = row.category === 'TOTAL';
+                    const tr = document.createElement('tr');
+                    if (isTotalRow) tr.classList.add('bg-orange-50', 'font-bold');
+                    else tr.classList.add('border-b', 'border-orange-100');
+                    tr.innerHTML = `
+                        <td class="px-4 py-2 text-left ${isTotalRow ? 'font-bold' : 'font-medium text-gray-700'}">${row.category}</td>
+                        <td class="px-4 py-2 text-center">${row.today || 0}</td>
+                        <td class="px-4 py-2 text-center">${row.week || 0}</td>
+                        <td class="px-4 py-2 text-center">${row.month || 0}</td>
+                        <td class="px-4 py-2 text-center">${row.year || 0}</td>
+                    `;
+                    tbody.appendChild(tr);
+                });
+            } else {
+                tbody.innerHTML = '<tr><td colspan="5" class="text-center p-4 text-gray-500 italic">No data available for this timeframe.</td></tr>';
+            }
+            return true;
+        } catch (error) {
+            tbody.innerHTML = '<tr><td colspan="5" class="text-center p-4 text-red-500">Failed to load report.</td></tr>';
+            return false;
+        }
+    }
+
     async function initializeCharts(filter = 'month') {
         const breakdownTbody = document.getElementById('department-breakdown-tbody');
         const weeklyCtx = document.getElementById('weeklyActivityChart')?.getContext('2d');
@@ -326,6 +359,7 @@ document.addEventListener('DOMContentLoaded', function () {
             populateTopVisitors(filter),
             populateTopBorrowers(filter),
             populateMostBorrowedBooks(filter),
+            populateLostDamagedBooks(filter),
             initializeCharts(filter)
         ]);
 

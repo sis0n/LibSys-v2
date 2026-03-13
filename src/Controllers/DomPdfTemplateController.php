@@ -44,7 +44,12 @@ class DomPdfTemplateController extends Controller
             'deletedBooks'     => $reportRepo->getDeletedBooksData($startDate, $endDate),
             'circulatedBooks'  => $reportRepo->getCirculatedBooksData($startDate, $endDate),
             'circulatedEquipments' => $reportRepo->getCirculatedEquipmentsData($startDate, $endDate),
+            'lostDamagedBooks' => $reportRepo->getLostDamagedBooksData($startDate, $endDate),
             'topVisitors'      => $reportRepo->getTopVisitorsData($startDate, $endDate),
+            'topBorrowers'     => $reportRepo->getTopBorrowersData($startDate, $endDate),
+            'mostBorrowedBooks'=> $reportRepo->getMostBorrowedBooksData($startDate, $endDate),
+            'overdueSummary'   => $reportRepo->getOverdueSummaryData($startDate, $endDate),
+            'libraryResources' => $reportRepo->getLibraryResourcesData(),
             'libraryVisits'    => $reportRepo->getLibraryVisitsData($startDate, $endDate),
             'dateRange'        => [$startDate, $endDate],
         ];

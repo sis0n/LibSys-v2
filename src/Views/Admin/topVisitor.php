@@ -225,6 +225,31 @@
         </div>
     </div>
 
+    <!-- Fourth Row of Tables (New: Lost and Damaged Books) -->
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mt-8">
+        <!-- Lost and Damaged Books Table -->
+        <div class="bg-white border border-orange-200 rounded-xl shadow-sm p-5 transition-all hover:shadow-md">
+            <div class="flex justify-between items-center mb-4 border-b border-orange-50 pb-3">
+                <h3 class="text-sm font-black text-gray-800 uppercase tracking-widest">Lost and Damaged Books</h3>
+                <span class="timeframe-badge text-[10px] bg-orange-100 text-orange-700 font-black uppercase tracking-wider px-3 py-1 rounded-full">This Month</span>
+            </div>
+            <div class="overflow-x-auto rounded-lg border border-orange-100">
+                <table class="w-full text-xs border-collapse">
+                    <thead class="bg-orange-50 text-orange-700">
+                        <tr>
+                            <th scope="col" class="px-3 py-2.5 text-left font-black uppercase">Category</th>
+                            <th scope="col" class="px-3 py-2.5 text-center font-black uppercase">Today</th>
+                            <th scope="col" class="px-3 py-2.5 text-center font-black uppercase">Week</th>
+                            <th scope="col" class="px-3 py-2.5 text-center font-black uppercase">Month</th>
+                            <th scope="col" class="px-3 py-2.5 text-center font-black uppercase">Year</th>
+                        </tr>
+                    </thead>
+                    <tbody id="lost-damaged-books-tbody" class="divide-y divide-orange-50"></tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
     <!-- Custom Date Modal -->
     <div id="customDateModal"
         class="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center h-full w-full hidden z-50">

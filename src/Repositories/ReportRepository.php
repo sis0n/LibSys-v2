@@ -323,15 +323,211 @@ class ReportRepository
         }
     }
 
-    // --- PDF Generation Methods ---
-
-    public function getLibraryResourcesData($startDate, $endDate)
+    public function getLostDamagedBooksSummary(string $filter = 'month')
     {
-        return [
-            [ 'year' => 2025, 'title' => '-', 'volume' => '-', 'processed' => '-' ],
-            [ 'year' => 2026, 'title' => '-', 'volume' => '-', 'processed' => '-' ],
-            [ 'year' => 2027, 'title' => '-', 'volume' => '-', 'processed' => '-' ],
-        ];
+        try {
+            $whereClause = "";
+            if ($filter === 'day') {
+                $whereClause = "AND DATE(bti.returned_at) = CURDATE()";
+            } elseif ($filter === 'month') {
+                $whereClause = "AND MONTH(bti.returned_at) = MONTH(CURDATE()) AND YEAR(bti.returned_at) = YEAR(CURDATE())";
+            } else { // year
+                $whereClause = "AND YEAR(bti.returned_at) = YEAR(CURDATE())";
+            }
+
+            $sql = "
+                SELECT
+                    'Lost' AS category,
+                    COUNT(CASE WHEN DATE(bti.returned_at) = CURDATE() THEN bti.item_id END) AS today,
+                    COUNT(CASE WHEN YEARWEEK(bti.returned_at, 1) = YEARWEEK(CURDATE(), 1) THEN bti.item_id END) AS week,
+                    COUNT(CASE WHEN YEAR(bti.returned_at) = YEAR(CURDATE()) AND MONTH(bti.returned_at) = MONTH(CURDATE()) THEN bti.item_id END) AS month,
+                    COUNT(CASE WHEN YEAR(bti.returned_at) = YEAR(CURDATE()) THEN bti.item_id END) AS year,
+                    COUNT(bti.item_id) AS filtered_count
+                FROM borrow_transaction_items bti
+                WHERE bti.status = 'lost' AND bti.book_id IS NOT NULL $whereClause
+                UNION ALL
+                SELECT
+                    'Damaged' AS category,
+                    COUNT(CASE WHEN DATE(bti.returned_at) = CURDATE() THEN bti.item_id END) AS today,
+                    COUNT(CASE WHEN YEARWEEK(bti.returned_at, 1) = YEARWEEK(CURDATE(), 1) THEN bti.item_id END) AS week,
+                    COUNT(CASE WHEN YEAR(bti.returned_at) = YEAR(CURDATE()) AND MONTH(bti.returned_at) = MONTH(CURDATE()) THEN bti.item_id END) AS month,
+                    COUNT(CASE WHEN YEAR(bti.returned_at) = YEAR(CURDATE()) THEN bti.item_id END) AS year,
+                    COUNT(bti.item_id) AS filtered_count
+                FROM borrow_transaction_items bti
+                WHERE bti.status = 'damaged' AND bti.book_id IS NOT NULL $whereClause
+                UNION ALL
+                SELECT
+                    'TOTAL' AS category,
+                    COUNT(CASE WHEN DATE(bti.returned_at) = CURDATE() THEN bti.item_id END) AS today,
+                    COUNT(CASE WHEN YEARWEEK(bti.returned_at, 1) = YEARWEEK(CURDATE(), 1) THEN bti.item_id END) AS week,
+                    COUNT(CASE WHEN YEAR(bti.returned_at) = YEAR(CURDATE()) AND MONTH(bti.returned_at) = MONTH(CURDATE()) THEN bti.item_id END) AS month,
+                    COUNT(CASE WHEN YEAR(bti.returned_at) = YEAR(CURDATE()) THEN bti.item_id END) AS year,
+                    COUNT(bti.item_id) AS filtered_count
+                FROM borrow_transaction_items bti
+                WHERE bti.status IN ('lost', 'damaged') AND bti.book_id IS NOT NULL $whereClause;
+            ";
+            $stmt = $this->db->prepare($sql);
+            $stmt->execute();
+            return $stmt->fetchAll(PDO::FETCH_ASSOC);
+        } catch (Exception $e) {
+            error_log("ReportRepository error in getLostDamagedBooksSummary: " . $e->getMessage());
+            return [];
+        }
+    }
+
+    public function getMostBorrowedBooksData($startDate, $endDate)
+    {
+        try {
+            $sql = "
+                SELECT 
+                    b.title,
+                    b.author,
+                    b.accession_number,
+                    COUNT(bti.item_id) AS range_total
+                FROM borrow_transaction_items bti
+                JOIN books b ON bti.book_id = b.book_id
+                JOIN borrow_transactions bt ON bti.transaction_id = bt.transaction_id
+                WHERE bti.book_id IS NOT NULL AND DATE(bt.borrowed_at) BETWEEN :startDate AND :endDate
+                GROUP BY b.book_id, b.title, b.author, b.accession_number
+                ORDER BY range_total DESC
+                LIMIT 10;
+            ";
+            $stmt = $this->db->prepare($sql);
+            $stmt->execute(['startDate' => $startDate, 'endDate' => $endDate]);
+            return $stmt->fetchAll(PDO::FETCH_ASSOC);
+        } catch (Exception $e) {
+            error_log("ReportRepository error in getMostBorrowedBooksData: " . $e->getMessage());
+            return [];
+        }
+    }
+
+    public function getTopBorrowersData($startDate, $endDate)
+    {
+        try {
+            $sql = "
+                SELECT 
+                    CONCAT(u.first_name, ' ', u.last_name) AS full_name,
+                    u.username AS identifier,
+                    u.role,
+                    COUNT(bt.transaction_id) AS range_total
+                FROM borrow_transactions bt
+                LEFT JOIN students s ON bt.student_id = s.student_id
+                LEFT JOIN faculty f ON bt.faculty_id = f.faculty_id
+                LEFT JOIN staff st ON bt.staff_id = st.staff_id
+                JOIN users u ON u.user_id = COALESCE(s.user_id, f.user_id, st.user_id)
+                WHERE DATE(bt.borrowed_at) BETWEEN :startDate AND :endDate
+                GROUP BY u.user_id, u.first_name, u.last_name, u.username, u.role
+                ORDER BY range_total DESC
+                LIMIT 10;
+            ";
+            $stmt = $this->db->prepare($sql);
+            $stmt->execute(['startDate' => $startDate, 'endDate' => $endDate]);
+            return $stmt->fetchAll(PDO::FETCH_ASSOC);
+        } catch (Exception $e) {
+            error_log("ReportRepository error in getTopBorrowersData: " . $e->getMessage());
+            return [];
+        }
+    }
+
+    public function getOverdueSummaryData($startDate, $endDate)
+    {
+        try {
+            // Count items that became overdue within the date range or are currently overdue and were borrowed in the range
+            // For simplicity, we count items where the due_date falls within the range and status is 'overdue' or 'returned' (if it was returned late)
+            $sql = "
+                SELECT
+                    'Overdue Books' as category,
+                    COUNT(item_id) as range_total
+                FROM borrow_transaction_items
+                WHERE book_id IS NOT NULL 
+                AND status = 'overdue'
+                AND DATE(due_date) BETWEEN :startDate AND :endDate
+                UNION ALL
+                SELECT
+                    'Overdue Equipments' as category,
+                    COUNT(item_id) as range_total
+                FROM borrow_transaction_items
+                WHERE equipment_id IS NOT NULL 
+                AND status = 'overdue'
+                AND DATE(due_date) BETWEEN :startDate AND :endDate
+            ";
+            $stmt = $this->db->prepare($sql);
+            $stmt->execute(['startDate' => $startDate, 'endDate' => $endDate]);
+            return $stmt->fetchAll(PDO::FETCH_ASSOC);
+        } catch (Exception $e) {
+            error_log("ReportRepository error in getOverdueSummaryData: " . $e->getMessage());
+            return [];
+        }
+    }
+
+    public function getLostDamagedBooksData($startDate, $endDate)
+    {
+        try {
+            $sql = "
+                SELECT
+                    'Lost' AS category,
+                    COUNT(CASE WHEN DATE(bti.returned_at) = :endDate THEN bti.item_id END) AS today,
+                    COUNT(CASE WHEN YEARWEEK(bti.returned_at, 1) = YEARWEEK(:endDate, 1) THEN bti.item_id END) AS week,
+                    COUNT(CASE WHEN YEAR(bti.returned_at) = YEAR(:endDate) AND MONTH(bti.returned_at) = MONTH(:endDate) THEN bti.item_id END) AS month,
+                    COUNT(bti.item_id) AS range_total
+                FROM borrow_transaction_items bti
+                WHERE bti.status = 'lost' AND bti.book_id IS NOT NULL AND DATE(bti.returned_at) BETWEEN :startDate AND :endDate
+                UNION ALL
+                SELECT
+                    'Damaged' AS category,
+                    COUNT(CASE WHEN DATE(bti.returned_at) = :endDate THEN bti.item_id END) AS today,
+                    COUNT(CASE WHEN YEARWEEK(bti.returned_at, 1) = YEARWEEK(:endDate, 1) THEN bti.item_id END) AS week,
+                    COUNT(CASE WHEN YEAR(bti.returned_at) = YEAR(:endDate) AND MONTH(bti.returned_at) = MONTH(:endDate) THEN bti.item_id END) AS month,
+                    COUNT(bti.item_id) AS range_total
+                FROM borrow_transaction_items bti
+                WHERE bti.status = 'damaged' AND bti.book_id IS NOT NULL AND DATE(bti.returned_at) BETWEEN :startDate AND :endDate
+                UNION ALL
+                SELECT
+                    'TOTAL' AS category,
+                    COUNT(CASE WHEN DATE(bti.returned_at) = :endDate THEN bti.item_id END) AS today,
+                    COUNT(CASE WHEN YEARWEEK(bti.returned_at, 1) = YEARWEEK(:endDate, 1) THEN bti.item_id END) AS week,
+                    COUNT(CASE WHEN YEAR(bti.returned_at) = YEAR(:endDate) AND MONTH(bti.returned_at) = MONTH(:endDate) THEN bti.item_id END) AS month,
+                    COUNT(bti.item_id) AS range_total
+                FROM borrow_transaction_items bti
+                WHERE bti.status IN ('lost', 'damaged') AND bti.book_id IS NOT NULL AND DATE(bti.returned_at) BETWEEN :startDate AND :endDate;
+            ";
+            $stmt = $this->db->prepare($sql);
+            $stmt->execute(['startDate' => $startDate, 'endDate' => $endDate]);
+            return $stmt->fetchAll(PDO::FETCH_ASSOC);
+        } catch (Exception $e) {
+            error_log("ReportRepository error in getLostDamagedBooksData: " . $e->getMessage());
+            return [];
+        }
+    }
+
+    public function getLibraryResourcesData()
+    {
+        try {
+            // Count active books (available or borrowed, not deleted)
+            $stmtBooks = $this->db->query("SELECT COUNT(*) FROM books WHERE deleted_at IS NULL");
+            $totalBooks = $stmtBooks->fetchColumn();
+
+            // Count available books specifically
+            $stmtAvail = $this->db->query("SELECT COUNT(*) FROM books WHERE deleted_at IS NULL AND availability = 'available'");
+            $availableBooks = $stmtAvail->fetchColumn();
+
+            // Count active equipments (not deleted)
+            $stmtEquip = $this->db->query("SELECT COUNT(*) FROM equipments WHERE deleted_at IS NULL");
+            $totalEquip = $stmtEquip->fetchColumn();
+
+            return [
+                'total_collection' => $totalBooks + $totalEquip,
+                'available_books'  => $availableBooks,
+                'total_equipments' => $totalEquip
+            ];
+        } catch (Exception $e) {
+            error_log("ReportRepository error in getLibraryResourcesData: " . $e->getMessage());
+            return [
+                'total_collection' => 0,
+                'available_books'  => 0,
+                'total_equipments' => 0
+            ];
+        }
     }
 
     public function getDeletedBooksData($startDate, $endDate)
@@ -342,7 +538,7 @@ class ReportRepository
                     SUM(CASE WHEN DATE(deleted_at) = :endDate THEN 1 ELSE 0 END) as today,
                     SUM(CASE WHEN YEARWEEK(deleted_at, 1) = YEARWEEK(:endDate, 1) THEN 1 ELSE 0 END) as week,
                     SUM(CASE WHEN MONTH(deleted_at) = MONTH(:endDate) AND YEAR(deleted_at) = YEAR(:endDate) THEN 1 ELSE 0 END) as month,
-                    COUNT(*) as year
+                    COUNT(*) as range_total
                 FROM books
                 WHERE deleted_at BETWEEN :startDate AND :endDate;
             ";
@@ -364,7 +560,7 @@ class ReportRepository
                     COUNT(CASE WHEN DATE(bt.borrowed_at) = :endDate THEN bti.item_id END) AS today,
                     COUNT(CASE WHEN YEARWEEK(bt.borrowed_at, 1) = YEARWEEK(:endDate, 1) THEN bti.item_id END) AS week,
                     COUNT(CASE WHEN YEAR(bt.borrowed_at) = YEAR(:endDate) AND MONTH(bt.borrowed_at) = MONTH(:endDate) THEN bti.item_id END) AS month,
-                    COUNT(bti.item_id) AS year
+                    COUNT(bti.item_id) AS range_total
                 FROM borrow_transactions bt JOIN borrow_transaction_items bti ON bt.transaction_id = bti.transaction_id
                 WHERE bt.student_id IS NOT NULL AND bti.status IN ('borrowed', 'returned', 'overdue') AND bti.book_id IS NOT NULL AND DATE(bt.borrowed_at) BETWEEN :startDate AND :endDate
                 UNION ALL
@@ -373,7 +569,7 @@ class ReportRepository
                     COUNT(CASE WHEN DATE(bt.borrowed_at) = :endDate THEN bti.item_id END) AS today,
                     COUNT(CASE WHEN YEARWEEK(bt.borrowed_at, 1) = YEARWEEK(:endDate, 1) THEN bti.item_id END) AS week,
                     COUNT(CASE WHEN YEAR(bt.borrowed_at) = YEAR(:endDate) AND MONTH(bt.borrowed_at) = MONTH(:endDate) THEN bti.item_id END) AS month,
-                    COUNT(bti.item_id) AS year
+                    COUNT(bti.item_id) AS range_total
                 FROM borrow_transactions bt JOIN borrow_transaction_items bti ON bt.transaction_id = bti.transaction_id
                 WHERE bt.faculty_id IS NOT NULL AND bti.status IN ('borrowed', 'returned', 'overdue') AND bti.book_id IS NOT NULL AND DATE(bt.borrowed_at) BETWEEN :startDate AND :endDate
                 UNION ALL
@@ -382,7 +578,7 @@ class ReportRepository
                     COUNT(CASE WHEN DATE(bt.borrowed_at) = :endDate THEN bti.item_id END) AS today,
                     COUNT(CASE WHEN YEARWEEK(bt.borrowed_at, 1) = YEARWEEK(:endDate, 1) THEN bti.item_id END) AS week,
                     COUNT(CASE WHEN YEAR(bt.borrowed_at) = YEAR(:endDate) AND MONTH(bt.borrowed_at) = MONTH(:endDate) THEN bti.item_id END) AS month,
-                    COUNT(bti.item_id) AS year
+                    COUNT(bti.item_id) AS range_total
                 FROM borrow_transactions bt JOIN borrow_transaction_items bti ON bt.transaction_id = bti.transaction_id
                 WHERE bt.staff_id IS NOT NULL AND bti.status IN ('borrowed', 'returned', 'overdue') AND bti.book_id IS NOT NULL AND DATE(bt.borrowed_at) BETWEEN :startDate AND :endDate
                 UNION ALL
@@ -391,7 +587,7 @@ class ReportRepository
                     COUNT(CASE WHEN DATE(bt.borrowed_at) = :endDate THEN bti.item_id END) AS today,
                     COUNT(CASE WHEN YEARWEEK(bt.borrowed_at, 1) = YEARWEEK(:endDate, 1) THEN bti.item_id END) AS week,
                     COUNT(CASE WHEN YEAR(bt.borrowed_at) = YEAR(:endDate) AND MONTH(bt.borrowed_at) = MONTH(:endDate) THEN bti.item_id END) AS month,
-                    COUNT(bti.item_id) AS year
+                    COUNT(bti.item_id) AS range_total
                 FROM borrow_transactions bt JOIN borrow_transaction_items bti ON bt.transaction_id = bti.transaction_id
                 WHERE bti.status IN ('borrowed', 'returned', 'overdue') AND bti.book_id IS NOT NULL AND DATE(bt.borrowed_at) BETWEEN :startDate AND :endDate;
             ";
@@ -413,7 +609,7 @@ class ReportRepository
                     COUNT(CASE WHEN DATE(bt.borrowed_at) = :endDate THEN bti.item_id END) AS today,
                     COUNT(CASE WHEN YEARWEEK(bt.borrowed_at, 1) = YEARWEEK(:endDate, 1) THEN bti.item_id END) AS week,
                     COUNT(CASE WHEN YEAR(bt.borrowed_at) = YEAR(:endDate) AND MONTH(bt.borrowed_at) = MONTH(:endDate) THEN bti.item_id END) AS month,
-                    COUNT(bti.item_id) AS year
+                    COUNT(bti.item_id) AS range_total
                 FROM borrow_transactions bt JOIN borrow_transaction_items bti ON bt.transaction_id = bti.transaction_id
                 WHERE bt.student_id IS NOT NULL AND bti.status IN ('borrowed', 'returned', 'overdue') AND bti.equipment_id IS NOT NULL AND DATE(bt.borrowed_at) BETWEEN :startDate AND :endDate
                 UNION ALL
@@ -422,7 +618,7 @@ class ReportRepository
                     COUNT(CASE WHEN DATE(bt.borrowed_at) = :endDate THEN bti.item_id END) AS today,
                     COUNT(CASE WHEN YEARWEEK(bt.borrowed_at, 1) = YEARWEEK(:endDate, 1) THEN bti.item_id END) AS week,
                     COUNT(CASE WHEN YEAR(bt.borrowed_at) = YEAR(:endDate) AND MONTH(bt.borrowed_at) = MONTH(:endDate) THEN bti.item_id END) AS month,
-                    COUNT(bti.item_id) AS year
+                    COUNT(bti.item_id) AS range_total
                 FROM borrow_transactions bt JOIN borrow_transaction_items bti ON bt.transaction_id = bti.transaction_id
                 WHERE bt.faculty_id IS NOT NULL AND bti.status IN ('borrowed', 'returned', 'overdue') AND bti.equipment_id IS NOT NULL AND DATE(bt.borrowed_at) BETWEEN :startDate AND :endDate
                 UNION ALL
@@ -431,7 +627,7 @@ class ReportRepository
                     COUNT(CASE WHEN DATE(bt.borrowed_at) = :endDate THEN bti.item_id END) AS today,
                     COUNT(CASE WHEN YEARWEEK(bt.borrowed_at, 1) = YEARWEEK(:endDate, 1) THEN bti.item_id END) AS week,
                     COUNT(CASE WHEN YEAR(bt.borrowed_at) = YEAR(:endDate) AND MONTH(bt.borrowed_at) = MONTH(:endDate) THEN bti.item_id END) AS month,
-                    COUNT(bti.item_id) AS year
+                    COUNT(bti.item_id) AS range_total
                 FROM borrow_transactions bt JOIN borrow_transaction_items bti ON bt.transaction_id = bti.transaction_id
                 WHERE bt.staff_id IS NOT NULL AND bti.status IN ('borrowed', 'returned', 'overdue') AND bti.equipment_id IS NOT NULL AND DATE(bt.borrowed_at) BETWEEN :startDate AND :endDate
                 UNION ALL
@@ -440,7 +636,7 @@ class ReportRepository
                     COUNT(CASE WHEN DATE(bt.borrowed_at) = :endDate THEN bti.item_id END) AS today,
                     COUNT(CASE WHEN YEARWEEK(bt.borrowed_at, 1) = YEARWEEK(:endDate, 1) THEN bti.item_id END) AS week,
                     COUNT(CASE WHEN YEAR(bt.borrowed_at) = YEAR(:endDate) AND MONTH(bt.borrowed_at) = MONTH(:endDate) THEN bti.item_id END) AS month,
-                    COUNT(bti.item_id) AS year
+                    COUNT(bti.item_id) AS range_total
                 FROM borrow_transactions bt JOIN borrow_transaction_items bti ON bt.transaction_id = bti.transaction_id
                 WHERE bti.status IN ('borrowed', 'returned', 'overdue') AND bti.equipment_id IS NOT NULL AND DATE(bt.borrowed_at) BETWEEN :startDate AND :endDate;
             ";
@@ -490,7 +686,7 @@ class ReportRepository
                         COUNT(CASE WHEN DATE(a.date) = :endDate THEN a.id END) AS today,
                         COUNT(CASE WHEN a.date BETWEEN DATE_SUB(:endDate, INTERVAL 6 DAY) AND :endDate THEN a.id END) AS week,
                         COUNT(CASE WHEN MONTH(a.date) = MONTH(:endDate) AND YEAR(a.date) = YEAR(:endDate) THEN a.id END) AS month,
-                        COUNT(a.id) AS year
+                        COUNT(a.id) AS range_total
                     FROM colleges cl
                     LEFT JOIN courses c ON cl.college_id = c.college_id
                     LEFT JOIN students s ON c.course_id = s.course_id
@@ -504,7 +700,7 @@ class ReportRepository
                     SUM(today) AS today,
                     SUM(week) AS week,
                     SUM(month) AS month,
-                    SUM(year) AS year
+                    SUM(range_total) AS range_total
                 FROM DepartmentVisits;
             ";
             $stmt = $this->db->prepare($sql);
