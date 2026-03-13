@@ -221,9 +221,9 @@ class RouteConfig
     $router->post('api/superadmin/backup/restore/{filename}', 'BackupController@restoreBackup', ['superadmin']);
     $router->post('api/superadmin/backup/delete/{filename}', 'BackupController@deleteBackup', ['superadmin']);
     $router->post('api/superadmin/backup/upload_restore', 'BackupController@uploadAndRestore', ['superadmin']);
-    $router->get('api/superadmin/dashboard/stats', 'App\Controllers\DashboardController@getStats', ['superadmin']);
-    $router->get('api/superadmin/dashboard/top-visitors', 'App\Controllers\DashboardController@getTopVisitors', ['superadmin']);
-    $router->get('api/superadmin/dashboard/weekly-activity', 'App\Controllers\DashboardController@getWeeklyActivity', ['superadmin']);
+    $router->get('api/superadmin/dashboard/stats', 'DashboardController@getStats', ['superadmin']);
+    $router->get('api/superadmin/dashboard/top-visitors', 'DashboardController@getTopVisitors', ['superadmin']);
+    $router->get('api/superadmin/dashboard/weekly-activity', 'DashboardController@getWeeklyActivity', ['superadmin']);
     $router->get('api/superadmin/dashboard/getData', 'DashboardController@getData', ['superadmin']);
     $router->get('api/superadmin/transactionHistory/json', 'TransactionHistoryController@getTransactionsJson', ['superadmin']);
     $router->get('api/superadmin/borrowingForm/manualBorrow', 'ManualBorrowingController@manualBorrow', ['superadmin']);
