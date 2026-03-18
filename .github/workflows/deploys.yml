@@ -34,7 +34,8 @@ jobs:
           port: 21
           protocol: ftp
           local-dir: ./
-          server-dir: ./ # Binago mula public_html/ para hindi mag-nest ang folders
+          server-dir: domains/library-ucc.bscs3a.com/public_html/
+          state-name: .ftp-deploy-sync-state.json
           dangerous-clean-slate: false
           security: loose 
           exclude: |
@@ -47,4 +48,5 @@ jobs:
             **/composer.lock
             **/GEMINI.md
             **/plan.md
+            **/test_db.php
             **/deploy.yml
