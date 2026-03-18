@@ -3,7 +3,7 @@ name: 🚀 Deploy to Hostinger via FTP
 on:
   push:
     branches:
-      - main
+      - main 
   workflow_dispatch:
 
 jobs:
@@ -13,16 +13,6 @@ jobs:
     steps:
       - name: 📥 Checkout repository
         uses: actions/checkout@v4
-
-      - name: 🐘 Setup PHP
-        uses: shivammathur/setup-php@v2
-        with:
-          php-version: '8.2'
-          extensions: mbstring, pdo, pdo_mysql, gd, intl, bcmath
-          coverage: none
-
-      - name: 📦 Install Composer Dependencies
-        run: composer install --no-dev --optimize-autoloader --no-interaction
 
       - name: 🟢 Setup Node.js
         uses: actions/setup-node@v4
@@ -44,7 +34,7 @@ jobs:
           port: ${{ secrets.FTP_PORT }}
           protocol: ftp
           local-dir: ./
-          server-dir: /
+          server-dir: public_html/
           dangerous-clean-slate: false
           create-remote-path: true
           exclude: |
@@ -52,7 +42,9 @@ jobs:
             **/.github/**
             **/node_modules/**
             **/vendor/**
-            **/checkout_test.txt/**
-            **/resetdata.php/**
-            **/sandbox.php/**
+            **/public/css/input.css
+            **/package-lock.json
+            **/composer.lock
+            **/GEMINI.md
+            **/plan.md
             **/deploy.yml
