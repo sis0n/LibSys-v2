@@ -34,9 +34,8 @@ jobs:
           port: 21
           protocol: ftp
           local-dir: ./
-          server-dir: public_html/
+          server-dir: ./ # Binago mula public_html/ para hindi mag-nest ang folders
           dangerous-clean-slate: false
-          # Idinagdag ito para i-bypass ang certificate errors kung sakali
           security: loose 
           exclude: |
             **/.git/**
