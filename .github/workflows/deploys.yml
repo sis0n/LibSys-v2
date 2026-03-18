@@ -34,7 +34,7 @@ jobs:
           port: 21
           protocol: ftp
           local-dir: ./
-          server-dir: domains/library-ucc.bscs3a.com/public_html/
+          server-dir: /
           state-name: .ftp-deploy-sync-state.json
           dangerous-clean-slate: false
           security: loose 
@@ -44,6 +44,8 @@ jobs:
             **/node_modules/**
             **/vendor/**
             **/public/css/input.css
+            **/.env
+            **/.env.example
             **/package-lock.json
             **/composer.lock
             **/GEMINI.md

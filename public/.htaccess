@@ -1,23 +1,11 @@
 <IfModule mod_rewrite.c>
     RewriteEngine On
-    RewriteBase /
+    
+    # Siguraduhin na laging may trailing slash kung folder ang request
+    RewriteCond %{REQUEST_FILENAME} !-f
+    RewriteRule ^(.*[^/])$ /$1/ [L,R=301]
 
-    # 1. (Optional) I-uncomment ito sa Hostinger para i-force ang HTTPS
-    # RewriteCond %{HTTPS} off
-    # RewriteRule ^(.*)$ https://%{HTTP_HOST}%{REQUEST_URI} [L,R=301]
-
-    # 2. Huwag galawin ang mga totoong files at folders
     RewriteCond %{REQUEST_FILENAME} !-f
     RewriteCond %{REQUEST_FILENAME} !-d
-    
-    # 3. Ipadala lahat sa index.php
-    RewriteRule . index.php [L]
-</IfModule>
-
-# Security: Iwasan ang directory browsing
-Options -Indexes
-
-<IfModule mod_security.c>
-    SecFilterEngine Off
-    SecFilterScanPOST Off
+    RewriteRule ^ index.php [L]
 </IfModule>

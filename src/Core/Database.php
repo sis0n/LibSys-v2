@@ -13,9 +13,6 @@ class Database
 
     private function __construct()
     {
-        $dotenv = Dotenv::createImmutable(__DIR__ . '/../../');
-        $dotenv->load();
-
         $driver = $_ENV['DB_CONNECTION'] ?? 'mysql';
         $host = $_ENV['DB_HOST'] ?? 'localhost';
         $db = $_ENV['DB_DATABASE'] ?? 'library-mobile';

@@ -72,7 +72,9 @@ class ViewController extends Controller
         "currentPage" => $current_page
       ]);
     } else {
+      http_response_code(403);
       $this->view("errors/403", ["title" => "Forbidden"], false);
+      exit;
     }
   }
 
