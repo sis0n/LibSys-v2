@@ -12,12 +12,12 @@ jobs:
 
     steps:
       - name: 📥 Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v4.1.0 # Updated action version
 
       - name: 🟢 Setup Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v4.0.2 # Updated action version
         with:
-          node-version: '20'
+          node-version: '20' # Node.js version for the runner environment
 
       - name: 📦 Install Node Modules
         run: npm ci
@@ -26,7 +26,7 @@ jobs:
         run: npm run build
 
       - name: 🚀 Deploy full project to Hostinger
-        uses: SamKirkland/FTP-Deploy-Action@v4.3.5
+        uses: SamKirkland/FTP-Deploy-Action@v4.3.5 # Latest stable version, but be mindful of Node.js 24 deprecation for runners
         with:
           server: ${{ secrets.FTP_SERVER }}
           username: ${{ secrets.FTP_USERNAME }}
@@ -42,10 +42,10 @@ jobs:
             **/.git/**
             **/.github/**
             **/node_modules/**
-            **/vendor/**
+            **/vendor/** # Excluded as composer install will be run via SSH
             **/public/css/input.css
-            **/.env
-            **/.env.example
+            **/.env # Excluded for security
+            **/.env.example # Excluded for security
             **/package-lock.json
             **/composer.lock
             **/GEMINI.md
