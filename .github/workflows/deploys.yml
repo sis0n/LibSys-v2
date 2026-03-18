@@ -9,8 +9,6 @@ on:
 jobs:
   deploy:
     runs-on: ubuntu-latest
-    env:
-      FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true # Para sa Node.js 24 support
 
     steps:
       - name: 📥 Checkout repository
@@ -19,7 +17,7 @@ jobs:
       - name: 🟢 Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '24' # In-update sa latest stable Node.js
+          node-version: '20' # Balik muna sa 20 para mag-match sa actions
 
       - name: 📦 Install Node Modules
         run: npm ci
@@ -33,7 +31,7 @@ jobs:
           server: ${{ secrets.FTP_SERVER }}
           username: ${{ secrets.FTP_USERNAME }}
           password: ${{ secrets.FTP_PASSWORD }}
-          port: 21 # Ni-hardcode na natin sa 21 para iwas sa Secret error
+          port: 21
           protocol: ftp
           local-dir: ./
           server-dir: public_html/
