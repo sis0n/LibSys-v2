@@ -98,7 +98,7 @@ class UserManagementController extends Controller
     $data = json_decode(file_get_contents("php://input"), true);
 
     $first_name = trim($data['first_name'] ?? '');
-    $middle_name = trim($data['middle_name'] ?? null);
+    $middle_name = trim($data['middle_name'] ?? '');
     $last_name = trim($data['last_name'] ?? '');
     $username = trim($data['username'] ?? '');
     $role = strtolower(trim($data['role'] ?? ''));

@@ -157,16 +157,20 @@ class TicketRepository
   public function getStudentInfo(int $studentId): array
   {
     $stmt = $this->db->prepare("
-            SELECT 
-                s.student_number, 
-                s.course, 
-                s.year_level, 
-                u.first_name, 
-                u.middle_name, 
-                u.last_name
+            SELECT
+                s.student_number,
+                c.course_title AS course,
+                s.year_level,
+                s.section,
+                u.email,
+                s.contact,
+                u.profile_picture,
+                s.registration_form
             FROM students s
             JOIN users u ON s.user_id = u.user_id
+            LEFT JOIN courses c ON s.course_id = c.course_id
             WHERE s.student_id = :sid
+
         ");
     $stmt->execute(['sid' => $studentId]);
     return $stmt->fetch(PDO::FETCH_ASSOC) ?: [];
