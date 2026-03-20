@@ -84,7 +84,9 @@ class ManualBorrowingController extends Controller
       if ($data['equipment_type'] === 'Book') {
         $required[] = 'accession_number';
       } else {
-        $required[] = 'equipment_name'; 
+        if (empty($data['equipment_id'])) {
+          $required[] = 'equipment_name';
+        }
       }
 
       foreach ($required as $field) {

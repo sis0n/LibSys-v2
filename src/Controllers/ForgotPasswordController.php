@@ -23,11 +23,6 @@ class ForgotPasswordController extends Controller
     $this->mailService = new MailService();
   }
 
-  private function validateCsrf(string $token): bool
-  {
-    return isset($_SESSION['csrf_token']) && hash_equals($_SESSION['csrf_token'], $token);
-  }
-
   public function index()
   {
     if (empty($_SESSION['csrf_token'])) {
@@ -58,7 +53,7 @@ class ForgotPasswordController extends Controller
   {
     header('Content-Type: application/json');
 
-    if (!$this->validateCsrf($_SERVER['HTTP_X_CSRF_TOKEN'] ?? ($_POST['csrf_token'] ?? ''))) {
+    if (!$this->validateCsrf()) {
       http_response_code(403);
       echo json_encode(['success' => false, 'message' => 'CSRF token validation failed.']);
       return;
@@ -117,7 +112,7 @@ class ForgotPasswordController extends Controller
     } catch (\Throwable $e) {
       error_log("[ForgotPasswordController::updatePassword] " . $e->getMessage());
       http_response_code(500);
-      echo json_encode(['success' => false, 'message' => 'An internal server error occurred.']);
+      echo json_encode(['success' => false, 'message' => 'An internal error occurred.']);
     }
   }
 
@@ -125,7 +120,7 @@ class ForgotPasswordController extends Controller
   {
     header('Content-Type: application/json');
 
-    if (!$this->validateCsrf($_SERVER['HTTP_X_CSRF_TOKEN'] ?? ($_POST['csrf_token'] ?? ''))) {
+    if (!$this->validateCsrf()) {
       http_response_code(403);
       echo json_encode(['success' => false, 'message' => 'CSRF token validation failed.']);
       return;
@@ -197,7 +192,7 @@ class ForgotPasswordController extends Controller
   {
     header('Content-Type: application/json');
 
-    if (!$this->validateCsrf($_SERVER['HTTP_X_CSRF_TOKEN'] ?? '')) {
+    if (!$this->validateCsrf()) {
       http_response_code(403);
       echo json_encode(['success' => false, 'message' => 'CSRF token validation failed.']);
       return;
@@ -219,7 +214,7 @@ class ForgotPasswordController extends Controller
   {
     header('Content-Type: application/json');
 
-    if (!$this->validateCsrf($_SERVER['HTTP_X_CSRF_TOKEN'] ?? '')) {
+    if (!$this->validateCsrf()) {
       http_response_code(403);
       echo json_encode(['success' => false, 'message' => 'CSRF token validation failed.']);
       return;

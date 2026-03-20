@@ -16,12 +16,6 @@ class RestoreUserController extends Controller
     $this->auditRepo = new \App\Repositories\AuditLogRepository();
   }
 
-  private function validateCsrf(string $token): bool
-  {
-    if (session_status() === PHP_SESSION_NONE) session_start();
-    return isset($_SESSION['csrf_token']) && hash_equals($_SESSION['csrf_token'], $token);
-  }
-
   public function index()
   {
     if (session_status() === PHP_SESSION_NONE) session_start();
@@ -62,15 +56,14 @@ class RestoreUserController extends Controller
       return;
     }
 
-    $input = json_decode(file_get_contents('php://input'), true);
-    $userId = $input['user_id'] ?? null;
-    $csrfToken = $_SERVER['HTTP_X_CSRF_TOKEN'] ?? ($input['csrf_token'] ?? '');
-
-    if (!$this->validateCsrf($csrfToken)) {
+    if (!$this->validateCsrf()) {
       http_response_code(403);
       echo json_encode(['success' => false, 'message' => 'CSRF token validation failed.']);
       return;
     }
+
+    $input = json_decode(file_get_contents('php://input'), true);
+    $userId = $input['user_id'] ?? null;
 
     if (!$userId) {
       http_response_code(400);
@@ -100,15 +93,17 @@ class RestoreUserController extends Controller
   public function archive($id)
   {
     header('Content-Type: application/json');
-    $userId = filter_var($id, FILTER_VALIDATE_INT);
-    $librarianId = isset($_SESSION['user_id']) ? (int)$_SESSION['user_id'] : null;
-    $csrfToken = $_SERVER['HTTP_X_CSRF_TOKEN'] ?? null; 
+    if (session_status() === PHP_SESSION_NONE) session_start();
 
-    if (!$this->validateCsrf($csrfToken)) {
+    if (!$this->validateCsrf()) {
       http_response_code(403);
       echo json_encode(['success' => false, 'message' => 'CSRF token validation failed.']);
       return;
     }
+
+    $userId = filter_var($id, FILTER_VALIDATE_INT);
+    $librarianId = isset($_SESSION['user_id']) ? (int)$_SESSION['user_id'] : null;
+
     if (!$userId) {
       http_response_code(400);
       echo json_encode(['success' => false, 'message' => 'Invalid User ID provided in URL.']);

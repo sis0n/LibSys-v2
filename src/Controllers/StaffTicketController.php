@@ -94,6 +94,37 @@ class StaffTicketController extends Controller
       exit;
     }
 
+    $profile = $this->staffProfileRepo->getProfileByUserId($userId);
+
+    if (!$profile) {
+        http_response_code(400);
+        echo json_encode(['success' => false, 'message' => 'Staff profile details not found. Please complete your profile first.']);
+        exit;
+    }
+
+    $missingFields = [];
+    if (empty($profile['email']) || !filter_var($profile['email'], FILTER_VALIDATE_EMAIL)) {
+        $missingFields[] = 'email';
+    }
+    if (empty($profile['contact'])) { 
+        $missingFields[] = 'contact number';
+    }
+    if (empty($profile['position']) || $profile['position'] === 'N/A') { 
+        $missingFields[] = 'position';
+    }
+    if (empty($profile['profile_picture'])) {
+        $missingFields[] = 'profile picture';
+    }
+
+    if (!empty($missingFields)) {
+        http_response_code(400);
+        echo json_encode([
+            'success' => false,
+            'message' => 'Your profile is incomplete. Please fill in the following required fields: ' . implode(', ', $missingFields) . '.'
+        ]);
+        exit;
+    }
+
     $input = json_decode(file_get_contents('php://input'), true);
     $selectedIds = $input['cart_ids'] ?? [];
 
