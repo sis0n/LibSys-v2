@@ -94,6 +94,37 @@ class FacultyTicketController extends Controller
       exit;
     }
 
+    $profile = $this->facultyProfileRepo->getProfileByUserId($userId);
+
+    if (!$profile) {
+        http_response_code(400);
+        echo json_encode(['success' => false, 'message' => 'Faculty profile details not found. Please complete your profile first.']);
+        exit;
+    }
+
+    $missingFields = [];
+    if (empty($profile['email']) || !filter_var($profile['email'], FILTER_VALIDATE_EMAIL)) {
+        $missingFields[] = 'email';
+    }
+    if (empty($profile['contact'])) { 
+        $missingFields[] = 'contact number';
+    }
+    if (empty($profile['college_id']) || (int)$profile['college_id'] === 0) { 
+        $missingFields[] = 'college/department';
+    }
+    if (empty($profile['profile_picture'])) {
+        $missingFields[] = 'profile picture';
+    }
+
+    if (!empty($missingFields)) {
+        http_response_code(400);
+        echo json_encode([
+            'success' => false,
+            'message' => 'Your profile is incomplete. Please fill in the following required fields: ' . implode(', ', $missingFields) . '.'
+        ]);
+        exit;
+    }
+
     $input = json_decode(file_get_contents('php://input'), true);
     $selectedIds = $input['cart_ids'] ?? [];
 
@@ -213,7 +244,7 @@ class FacultyTicketController extends Controller
 
     $transactionData = null;
     $items = [];
-    $facultyInfo = ['faculty_id' => 'N/A', 'name' => 'Faculty Name', 'college' => 'N/A'];
+    $facultyInfo = []; // Initialize as empty, will be populated if details are found
     $qrPath = null;
 
     if (empty($transactionCode)) {
@@ -222,23 +253,41 @@ class FacultyTicketController extends Controller
 
     if ($transactionCode) {
       $transaction = $this->ticketRepo->getTransactionByCode($transactionCode);
+      // Check if transaction exists AND belongs to the current faculty
       if ($transaction && $transaction['faculty_id'] == $facultyId) {
         $transactionData = $transaction;
         $items = $this->ticketRepo->getTransactionItems($transactionData['transaction_id']);
-        $details = $this->ticketRepo->getFacultyFullInfo($facultyId);
         
-        if ($details) {
-          $facultyInfo = [
-            'faculty_id' => $details['unique_faculty_id'],
-            'name' => $this->getFullName($details),
-            'college' => $details['college_name']
-          ];
+        $details = $this->ticketRepo->getFacultyFullInfo($facultyId); // Fetch faculty details
+        
+        if (!$details) { // If details are NOT found, this is an error.
+             http_response_code(400);
+             echo json_encode(['success' => false, 'message' => 'Error: Faculty profile details not found for this transaction.']);
+             exit;
         }
+
+        // If details are found, populate facultyInfo
+        $facultyInfo = [
+          'faculty_id' => $details['unique_faculty_id'] ?? 'N/A',
+          'name' => $this->getFullName($details), // getFullName expects an array; $details is guaranteed to be non-null here
+          'college' => $details['college_name'] ?? 'N/A'
+        ];
         
+        // Determine QR path if transaction is pending
         if (strtolower($transactionData['status']) === 'pending') {
           $qrPath = STORAGE_URL . "/" . ($transactionData['qrcode'] ?: "uploads/qrcodes/" . $transactionCode . ".svg");
         }
+      } else {
+          // Transaction not found or does not belong to the current faculty
+          http_response_code(404);
+          echo json_encode(['success' => false, 'message' => 'Transaction not found or does not belong to you.']);
+          exit;
       }
+    } else {
+        // No transaction code provided and no last ticket code in session
+        http_response_code(400);
+        echo json_encode(['success' => false, 'message' => 'No transaction code provided.']);
+        exit;
     }
 
     $this->view("faculty/qrBorrowingTicket", [
@@ -247,7 +296,7 @@ class FacultyTicketController extends Controller
       "transaction_code" => $transactionCode,
       "items" => $items,
       "qrPath" => $qrPath,
-      "faculty" => $facultyInfo,
+      "faculty" => $facultyInfo, // $facultyInfo is guaranteed to be populated if we reach here
       "generated_at" => $transactionData['generated_at'] ?? null,
       "expires_at" => $transactionData['expires_at'] ?? null,
       "isBorrowed" => ($transactionData && strtolower($transactionData['status']) === 'borrowed'),

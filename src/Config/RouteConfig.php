@@ -142,6 +142,9 @@ class RouteConfig
     $router->get('api/librarian/returning/getTableData', 'ReturningController@getOverdue', ['returning']);
     $router->get('api/librarian/returning/getRecent', 'ReturningController@getRecentReturnsJson', ['returning']);
     $router->post('api/librarian/returning/checkBook', 'ReturningController@checkBookStatus', ['returning']);
+    $router->get('api/admin/returning/getTableData', 'ReturningController@getOverdue', ['returning']);
+    $router->get('api/admin/returning/getRecent', 'ReturningController@getRecentReturnsJson', ['returning']);
+    $router->post('api/admin/returning/checkBook', 'ReturningController@checkBookStatus', ['returning']);
     $router->post('api/admin/returning/markReturned', 'ReturningController@returnBook', ['returning']);
     $router->post('api/admin/returning/extend', 'ReturningController@extendDueDate', ['returning']);
     $router->post('api/admin/returning/sendOverdueEmail', 'ReturningController@sendOverdueEmail', ['returning']);
@@ -242,8 +245,8 @@ class RouteConfig
     $router->get('api/superadmin/reports/getActivityReport', 'ReportController@getActivityReport', ['superadmin', 'reports']);
     $router->get('api/superadmin/reports/getReportGraphData', 'ReportController@getReportGraphData', ['superadmin', 'reports']);
     $router->post('api/superadmin/reports/generate-report', 'DomPdfTemplateController@generateLibraryReport', ['superadmin', 'reports']);
-    $router->get('api/superadmin/myProfile/get', 'SuperAdminProfileController@getProfile', ['superadmin']);
-    $router->post('api/superadmin/myProfile/update', 'SuperAdminProfileController@updateProfile', ['superadmin']);
+    $router->get('api/superadmin/myProfile/get', 'SuperadminController@getProfile', ['superadmin']);
+    $router->post('api/superadmin/myProfile/update', 'SuperadminController@updateProfile', ['superadmin']);
     $router->post('api/superadmin/returning/sendOverdueEmail', 'ReturningController@sendOverdueEmail', ['superadmin']);
     $router->get('api/superadmin/libraryPolicies/getAll', 'LibraryPolicyController@getAll', ['superadmin']);
     $router->post('api/superadmin/libraryPolicies/update', 'LibraryPolicyController@update', ['superadmin']);

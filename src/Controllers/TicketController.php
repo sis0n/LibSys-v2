@@ -80,6 +80,58 @@ class TicketController extends Controller
       exit;
     }
 
+    $studentDetails = $this->ticketRepo->getStudentInfo($studentId);
+
+    if (!$studentDetails) {
+        echo json_encode(['success' => false, 'message' => 'Could not retrieve student profile details.']);
+        exit;
+    }
+
+    $requiredFields = [
+        'profile_picture' => 'Profile picture',
+        'course' => 'Course',
+        'year_level' => 'Year Level',
+        'section' => 'Section',
+        'email' => 'Email',
+        'contact' => 'Contact Number',
+        'registration_form' => 'Registration Form'
+    ];
+
+    $missingFields = [];
+    foreach ($requiredFields as $key => $label) {
+        if ($key === 'section') {
+            if (!isset($studentDetails[$key]) || $studentDetails[$key] === null || strtolower(trim($studentDetails[$key])) === '' || strtolower(trim($studentDetails[$key])) === 'n/a') {
+                $missingFields[] = $label;
+            }
+        } else {
+            if (!isset($studentDetails[$key]) || empty(trim($studentDetails[$key]))) {
+                $missingFields[] = $label;
+            }
+        }
+    }
+
+    if (!empty($missingFields)) {
+        $errorMessage = 'Please update your ';
+        $count = count($missingFields);
+
+        if ($count === 1) {
+            $errorMessage .= $missingFields[0] . '.';
+        } elseif ($count === 2) {
+            $errorMessage .= $missingFields[0] . ' and ' . $missingFields[1] . '.';
+        } else {
+            for ($i = 0; $i < $count - 1; $i++) {
+                $errorMessage .= $missingFields[$i] . ', ';
+            }
+            $errorMessage .= 'and ' . $missingFields[$count - 1] . '.';
+        }
+
+        echo json_encode([
+            'success' => false,
+            'message' => $errorMessage
+        ]);
+        exit;
+    }
+
     $input = json_decode(file_get_contents('php://input'), true);
     $selectedIds = $input['cart_ids'] ?? [];
 
@@ -212,7 +264,7 @@ class TicketController extends Controller
       if ($transaction && $transaction['student_id'] == $studentId) {
         $transactionData = $transaction;
         $books = $this->ticketRepo->getTransactionItems($transactionData['transaction_id']);
-        $studentDetails = $this->ticketRepo->getStudentInfo($transactionData['student_id']);
+        $studentDetails = $this->ticketRepo->getStudentDetailsById($transactionData['student_id']);
         
         if ($studentDetails) {
           $fullName = trim(($studentDetails['first_name'] ?? '') . ' ' . ($studentDetails['last_name'] ?? ''));

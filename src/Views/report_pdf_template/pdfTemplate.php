@@ -86,7 +86,7 @@
     </div>
 
     <div class="footer">
-        Page <span class="pagenum"></span> | UCC Library Information System | UCC-LibSys &copy; <?= date('Y') ?>
+        Page <span class="pagenum"></span> | University of Caloocan City | UCC Library &copy; <?= date('Y') ?>
     </div>
 
     <div class="report-info">

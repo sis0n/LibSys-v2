@@ -16,12 +16,6 @@ class RestoreBookController extends Controller
     $this->auditRepo = new \App\Repositories\AuditLogRepository();
   }
 
-  private function validateCsrf(): bool
-  {
-    $csrfToken = $_SERVER['HTTP_X_CSRF_TOKEN'] ?? null;
-    return isset($_SESSION['csrf_token']) && is_string($csrfToken) && hash_equals($_SESSION['csrf_token'], $csrfToken);
-  }
-
 
   public function getDeletedBooksJson()
   {
@@ -44,6 +38,12 @@ class RestoreBookController extends Controller
     if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
       http_response_code(405);
       echo json_encode(['success' => false, 'message' => 'Method Not Allowed']);
+      return;
+    }
+
+    if (!$this->validateCsrf()) {
+      http_response_code(403);
+      echo json_encode(['success' => false, 'message' => 'CSRF Token Validation Failed.']);
       return;
     }
 
