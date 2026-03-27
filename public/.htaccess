@@ -1,8 +1,23 @@
-RewriteEngine On
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+    
+    # 1. Force HTTPS: Redirect HTTP to HTTPS
+    RewriteCond %{HTTPS} off
+    RewriteRule ^(.*)$ https://%{HTTP_HOST}%{REQUEST_URI} [L,R=301]
 
-RewriteBase /libsys-v2/public/
+    # Siguraduhin na laging may trailing slash kung folder ang request
+    RewriteCond %{REQUEST_FILENAME} !-f
+    RewriteRule ^(.*[^/])$ /$1/ [L,R=301]
 
-RewriteCond %{REQUEST_FILENAME} !-f
-RewriteCond %{REQUEST_FILENAME} !-d
+    RewriteCond %{REQUEST_FILENAME} !-f
+    RewriteCond %{REQUEST_FILENAME} !-d
+    RewriteRule ^ index.php [L]
+</IfModule>
 
-RewriteRule ^ index.php [QSA,L]
+# Security: Iwasan ang directory browsing
+Options -Indexes
+
+<IfModule mod_security.c>
+    SecFilterEngine Off
+    SecFilterScanPOST Off
+</IfModule>

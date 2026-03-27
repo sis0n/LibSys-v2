@@ -24,7 +24,7 @@
             </a>
 
             <div class="flex justify-center mt-2">
-                <img src="<?= BASE_URL ?>/assets/library-icons/apple-touch-icon.png" alt="Library Logo" class="w-32">
+                <img src="<?= BASE_URL ?>/assets/ucc-icons/apple-touch-icon.png" alt="Library Logo" class="w-16">
             </div>
 
             <h2 class="text-2xl font-semibold text-center text-gray-800">

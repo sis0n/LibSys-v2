@@ -70,11 +70,11 @@
                 <td style="width: 65px; border: none; padding: 0;">
                     <?php if ($uccLogoBase64): ?>
                         <img src="<?= $uccLogoBase64 ?>" class="header-logo" alt="UCC Logo">
-                    <?php endif; ?>
+                    <?php endif; ?>                   
                 </td>
-                <td class="header-text" style="border: none; padding: 0;">
-                    <p class="brand">University of Caloocan City</p>
-                    <p class="sub-brand">UCC Library</p>
+                <td class="header-text" style="border: none; padding: 0; white-space: nowrap;">
+                    <p class="brand" style="font-size: 24px; font-weight: bold;">University of Caloocan City</p>
+                    <p class="sub-brand" style="font-size: 14px;">Library Information Systems</p>
                 </td>
                 <td style="width: 65px; border: none; padding: 0; text-align: right;">
                     <?php if ($libLogoBase64): ?>
@@ -212,7 +212,7 @@
 
     <div class="page-break"></div>
 
-    <h2>Most Borrowed Books (Top 10)</h2>
+    <h2>Borrowed Books (Top 10)</h2>
     <table>
         <thead>
             <tr>
@@ -238,7 +238,7 @@
         </tbody>
     </table>
 
-    <h2>Top Borrowers (Top 10)</h2>
+    <h2>Borrowers (Top 10)</h2>
     <table>
         <thead>
             <tr>
@@ -266,7 +266,7 @@
         </tbody>
     </table>
 
-    <h2>Top 10 Most Active Visitors (Attendance)</h2>
+    <h2>Top 10 Active Visitors (Attendance)</h2>
     <table>
         <thead>
             <tr>

@@ -11,6 +11,7 @@ class ViewController extends Controller
 
   public function __construct()
   {
+    parent::__construct();
     $this->userPermissionsRepo = new UserPermissionModuleRepository();
   }
 
@@ -72,7 +73,9 @@ class ViewController extends Controller
         "currentPage" => $current_page
       ]);
     } else {
+      http_response_code(403);
       $this->view("errors/403", ["title" => "Forbidden"], false);
+      exit;
     }
   }
 

@@ -17,6 +17,7 @@ class AuthController extends Controller
 
     public function __construct()
     {
+        parent::__construct();
         $this->AuthRepository = new \App\Repositories\AuthRepository();
         $this->UserRepository = new \App\Repositories\UserRepository();
         $this->UserPermissionRepo = new \App\Repositories\UserPermissionModuleRepository();
@@ -159,6 +160,14 @@ class AuthController extends Controller
             echo json_encode([
                 'status' => 'error',
                 'message' => 'Invalid request method.'
+            ]);
+            exit;
+        }
+
+        if (!$this->validateCsrf()) {
+            echo json_encode([
+                'status' => 'error',
+                'message' => 'Invalid CSRF token.'
             ]);
             exit;
         }
