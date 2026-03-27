@@ -68,17 +68,17 @@
         <table class="header-table">
             <tr>
                 <td style="width: 65px; border: none; padding: 0;">
-                    <?php if ($libLogoBase64): ?>
-                        <img src="<?= $libLogoBase64 ?>" class="header-logo" alt="Library Logo">
-                    <?php endif; ?>
-                </td>
-                <td class="header-text" style="border: none; padding: 0;">
-                    <p class="brand">UCC LIB-SYS</p>
-                    <p class="sub-brand">University of Caloocan City Library Information System</p>
-                </td>
-                <td style="width: 65px; border: none; padding: 0; text-align: right;">
                     <?php if ($uccLogoBase64): ?>
                         <img src="<?= $uccLogoBase64 ?>" class="header-logo" alt="UCC Logo">
+                    <?php endif; ?>                   
+                </td>
+                <td class="header-text" style="border: none; padding: 0; white-space: nowrap;">
+                    <p class="brand" style="font-size: 24px; font-weight: bold;">University of Caloocan City</p>
+                    <p class="sub-brand" style="font-size: 14px;">Library Information Systems</p>
+                </td>
+                <td style="width: 65px; border: none; padding: 0; text-align: right;">
+                    <?php if ($libLogoBase64): ?>
+                        <img src="<?= $libLogoBase64 ?>" class="header-logo" alt="Library Logo">
                     <?php endif; ?>
                 </td>
             </tr>
