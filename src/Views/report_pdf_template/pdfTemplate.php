@@ -212,7 +212,7 @@
 
     <div class="page-break"></div>
 
-    <h2>Most Borrowed Books (Top 10)</h2>
+    <h2>Borrowed Books (Top 10)</h2>
     <table>
         <thead>
             <tr>
@@ -238,7 +238,7 @@
         </tbody>
     </table>
 
-    <h2>Top Borrowers (Top 10)</h2>
+    <h2>Borrowers (Top 10)</h2>
     <table>
         <thead>
             <tr>
@@ -266,7 +266,7 @@
         </tbody>
     </table>
 
-    <h2>Top 10 Most Active Visitors (Attendance)</h2>
+    <h2>Top 10 Active Visitors (Attendance)</h2>
     <table>
         <thead>
             <tr>
